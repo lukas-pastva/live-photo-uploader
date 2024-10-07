@@ -7,6 +7,7 @@
     <div class="col-md-3">
         <div class="card mb-3">
             <img src="{{ url_for('static', filename='uploads/' + category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
+            <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
         </div>
     </div>
     {% else %}
