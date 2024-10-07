@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <h1>Category: {{ category }}</h1>
-<a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg btn-block mb-3">Upload Photo</a>
+<a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg btn-block mb-3">Upload Photo/Video</a>
 
-<!-- Download All Photos Buttons -->
+<!-- Download All Files Buttons -->
 <div class="btn-group btn-group-vertical btn-block mb-3" role="group" aria-label="Download All Sizes">
     <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary">Download All Source</a>
     <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info">Download All Largest</a>
@@ -12,23 +11,40 @@
 </div>
 
 <div class="row">
-    {% for image in images %}
+    {% for file in files %}
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <div class="card mb-3">
-            <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image.name + '.jpeg') }}" class="card-img-top" alt="{{ image.filename }}">
+            {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
+                <!-- Display image thumbnail -->
+                <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + file.name + '.jpeg') }}" class="card-img-top" alt="{{ file.filename }}">
+            {% elif file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
+                <!-- Display video -->
+                <video class="card-img-top" controls>
+                    <source src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" type="video/{{ file.ext[1:] }}">
+                    Your browser does not support the video tag.
+                </video>
+            {% else %}
+                <!-- Unknown file type -->
+                <div class="card-img-top text-center">
+                    <span class="text-muted">Unsupported file type</span>
+                </div>
+            {% endif %}
             <div class="card-body">
-                <h5 class="card-title text-truncate">{{ image.filename }}</h5>
+                <h5 class="card-title text-truncate">{{ file.filename }}</h5>
                 <!-- Individual download links -->
-                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + image.name + image.ext) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Original</a>
-                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Large</a>
-                <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + image.name + '.jpeg') }}" class="btn btn-secondary btn-sm btn-block mb-2" download>Download Medium</a>
-                <!-- Remove the download thumbnail link if you don't want users to download individual thumbnails -->
-                <!-- <a href="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image.name + '.jpeg') }}" class="btn btn-dark btn-sm btn-block" download>Download Thumbnail</a> -->
+                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Source</a>
+                {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
+                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Largest</a>
+                    <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary btn-sm btn-block mb-2" download>Download Medium</a>
+                {% else %}
+                    <!-- For videos, only source and largest are available -->
+                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Video</a>
+                {% endif %}
             </div>
         </div>
     </div>
     {% else %}
-    <p>No images in this category.</p>
+    <p>No files in this category.</p>
     {% endfor %}
 </div>
 {% endblock %}

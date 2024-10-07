@@ -22,7 +22,7 @@ IMAGE_QUALITY = int(os.environ.get('IMAGE_QUALITY', '100'))
 # Ensure the upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-ALLOWED_EXTENSIONS = {'heic', 'jpg', 'jpeg', 'png', 'mov', 'mp4'}
+ALLOWED_EXTENSIONS = {'heic', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'mp4', 'mov', 'avi', 'mkv'}
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -32,6 +32,24 @@ def process_file(filepath, category):
     filename = os.path.basename(filepath)
     name, ext = os.path.splitext(filename)
     ext = ext.lower()
+
+    # Check if the file is an image or video
+    image_extensions = {'.heic', '.jpg', '.jpeg', '.png', '.gif', '.bmp'}
+    video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
+
+    if ext not in image_extensions and ext not in video_extensions:
+        # Unsupported file type
+        return
+
+    if ext in video_extensions:
+        # For videos, no processing is needed
+        # We can copy the video file to the 'largest' directory to keep consistency
+        save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        shutil.copyfile(filepath, save_path)
+        # No further processing needed
+        return
 
     # Open the image file
     if ext == '.heic':
@@ -58,13 +76,11 @@ def process_file(filepath, category):
     if image.mode in ('RGBA', 'LA'):
         # Create a white background image
         background = Image.new('RGB', image.size, (255, 255, 255))
-        # Paste the original image onto the background using the alpha channel as a mask
-        background.paste(image, mask=image.split()[-1])  # Use the alpha channel as mask
-        image = background  # Update the image variable to the new image without alpha
-        original_format = 'JPEG'  # Save as JPEG since transparency is removed
+        background.paste(image, mask=image.split()[-1])
+        image = background
+        original_format = 'JPEG'
         save_extension = '.jpeg'
     elif image.mode != 'RGB':
-        # Convert image to 'RGB' mode if it's not already
         image = image.convert('RGB')
 
     # Define the sizes for different resolutions
@@ -78,24 +94,18 @@ def process_file(filepath, category):
     for size_name, size in sizes.items():
         img_copy = image.copy()
         if size_name == 'largest':
-            # Only resize if the image is larger than the target size
             if image.width > size[0] or image.height > size[1]:
                 img_copy.thumbnail(size)
-            # Save the image in the appropriate format with maximum quality
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}{save_extension}')
             img_copy.save(save_path, original_format, quality=100)
         else:
-            # Resize to the target size
             img_copy.thumbnail(size)
-            # Save as JPEG
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}.jpeg')
             img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
-
-
 
 @app.route('/')
 def index():
@@ -107,15 +117,15 @@ def category_view(category):
     # Get filenames from the 'largest' directory
     largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
     if os.path.exists(largest_dir):
-        images = os.listdir(largest_dir)
-        image_info_list = []
-        for image in images:
-            name, ext = os.path.splitext(image)
-            image_info_list.append({'name': name, 'ext': ext.lower(), 'filename': image})
+        files = os.listdir(largest_dir)
+        file_info_list = []
+        for file in files:
+            name, ext = os.path.splitext(file)
+            ext = ext.lower()
+            file_info_list.append({'name': name, 'ext': ext, 'filename': file})
     else:
-        image_info_list = []
-    return render_template('category.html', category=category, images=image_info_list)
-
+        file_info_list = []
+    return render_template('category.html', category=category, files=file_info_list)
 
 @app.route('/category/create', methods=['POST'])
 def create_category():
@@ -135,7 +145,6 @@ def delete_category(category):
 @app.route('/upload/<category>', methods=['GET', 'POST'])
 def upload_file(category):
     if request.method == 'POST':
-        # Check if the post request has the file part
         if 'photos[]' not in request.files:
             return 'No file part', 400
         files = request.files.getlist('photos[]')
@@ -143,10 +152,12 @@ def upload_file(category):
             return 'No selected files', 400
         for file in files:
             if file and allowed_file(file.filename):
+                # Use secure filename
+                filename = secure_filename(file.filename)
                 # Save the original file
                 category_path = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
                 os.makedirs(category_path, exist_ok=True)
-                filepath = os.path.join(category_path, file.filename)
+                filepath = os.path.join(category_path, filename)
                 file.save(filepath)
 
                 # Process the file
