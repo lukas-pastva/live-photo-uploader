@@ -69,9 +69,9 @@ def process_file(filepath, category):
 
     # Define the sizes for different resolutions
     sizes = {
-        'largest': (1920, 1080),
-        'medium': (1280, 720),
-        'thumbnail': (200, 200),
+        'largest': (2880, 1620),
+        'medium': (1920, 1080),
+        'thumbnail': (400, 400),
     }
 
     # Generate and save images in different resolutions
@@ -103,9 +103,9 @@ def index():
 
 @app.route('/category/<category>')
 def category_view(category):
-    # Display images in the category
-    thumbnails_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'thumbnail')
-    images = os.listdir(thumbnails_dir) if os.path.exists(thumbnails_dir) else []
+    # Get filenames from the 'source' directory
+    source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+    images = os.listdir(source_dir) if os.path.exists(source_dir) else []
     return render_template('category.html', category=category, images=images)
 
 @app.route('/category/create', methods=['POST'])
@@ -151,18 +151,29 @@ def uploaded_file(filename):
 
 @app.route('/download_category/<category>')
 def download_category(category):
-    # Path to the directory containing the images (choose desired size)
-    images_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+    # Get the size parameter from the query string
+    size = request.args.get('size', 'largest')
+
+    # Validate the size parameter
+    valid_sizes = ['source', 'largest', 'medium', 'thumbnail']
+    if size not in valid_sizes:
+        return 'Invalid size parameter', 400
+
+    # Path to the directory containing the images of the specified size
+    images_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
     if not os.path.exists(images_dir):
-        return 'Category not found', 404
+        return 'Size not found', 404
 
     # Collect all image file paths
     image_filenames = os.listdir(images_dir)
     image_paths = [os.path.join(images_dir, filename) for filename in image_filenames]
 
+    if not image_filenames:
+        return 'No images to download', 404
+
     # Create a ZIP file in memory
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for file_path, filename in zip(image_paths, image_filenames):
             # Add each file to the ZIP archive
             zip_file.write(file_path, arcname=filename)
@@ -175,7 +186,7 @@ def download_category(category):
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
-        download_name=f'{category}_photos.zip'
+        download_name=f'{category}_{size}_photos.zip'
     )
 
 if __name__ == '__main__':

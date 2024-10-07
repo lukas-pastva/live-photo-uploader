@@ -2,17 +2,28 @@
 {% block content %}
 <h1>Category: {{ category }}</h1>
 <a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg btn-block mb-3">Upload Photo</a>
-<a href="{{ url_for('download_category', category=category) }}" class="btn btn-primary btn-lg btn-block mb-3">Download All Photos</a>
+
+<!-- Download All Photos Buttons -->
+<div class="btn-group btn-group-vertical btn-block mb-3" role="group" aria-label="Download All Sizes">
+    <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary">Download All Source</a>
+    <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info">Download All Largest</a>
+    <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary">Download All Medium</a>
+    <a href="{{ url_for('download_category', category=category, size='thumbnail') }}" class="btn btn-dark">Download All Thumbnails</a>
+</div>
+
 <div class="row">
     {% for image in images %}
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <div class="card mb-3">
-            <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
+            <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image_stem(image) + '.jpeg') }}" class="card-img-top" alt="{{ image }}">
             <div class="card-body">
                 <h5 class="card-title text-truncate">{{ image }}</h5>
-                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Largest</a>
-                <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + image) }}" class="btn btn-secondary btn-sm btn-block" download>Download Medium</a>
-            </div>
+                <!-- Individual download links -->
+                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + image) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Source</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image_stem(image) + image_extension(image)) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Largest</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + image_stem(image) + '.jpeg') }}" class="btn btn-secondary btn-sm btn-block mb-2" download>Download Medium</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image_stem(image) + '.jpeg') }}" class="btn btn-dark btn-sm btn-block" download>Download Thumbnail</a>
+            </div>            
         </div>
     </div>
     {% else %}
