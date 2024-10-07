@@ -9,22 +9,21 @@
     <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary">Download All Source</a>
     <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info">Download All Largest</a>
     <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary">Download All Medium</a>
-    <a href="{{ url_for('download_category', category=category, size='thumbnail') }}" class="btn btn-dark">Download All Thumbnails</a>
 </div>
 
 <div class="row">
     {% for image in images %}
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <div class="card mb-3">
-            <!-- Use the 'thumbnail' directory with '.jpeg' extension -->
             <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image.name + '.jpeg') }}" class="card-img-top" alt="{{ image.filename }}">
             <div class="card-body">
                 <h5 class="card-title text-truncate">{{ image.filename }}</h5>
                 <!-- Individual download links -->
-                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + image.name + image.ext) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Source</a>
-                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Largest</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + image.name + image.ext) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Original</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Large</a>
                 <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + image.name + '.jpeg') }}" class="btn btn-secondary btn-sm btn-block mb-2" download>Download Medium</a>
-                <a href="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image.name + '.jpeg') }}" class="btn btn-dark btn-sm btn-block" download>Download Thumbnail</a>
+                <!-- Remove the download thumbnail link if you don't want users to download individual thumbnails -->
+                <!-- <a href="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image.name + '.jpeg') }}" class="btn btn-dark btn-sm btn-block" download>Download Thumbnail</a> -->
             </div>
         </div>
     </div>
