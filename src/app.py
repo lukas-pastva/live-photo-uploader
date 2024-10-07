@@ -1,11 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 import os
 import shutil
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 from PIL import Image
 import pyheif
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Configurable upload directory via environment variable
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Configurable image quality via environment variable
+# Default quality is 100
+IMAGE_QUALITY = int(os.environ.get('IMAGE_QUALITY', '100'))
 
 # Ensure the upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -21,6 +28,7 @@ def process_file(filepath, category):
     name, ext = os.path.splitext(filename)
     ext = ext.lower()
 
+    # Open the image file
     if ext == '.heic':
         # Read HEIC file
         heif_file = pyheif.read(filepath)
@@ -36,32 +44,33 @@ def process_file(filepath, category):
         # Open other image formats
         image = Image.open(filepath)
 
-    # Handle images with alpha channel
+    # Handle images with transparency (alpha channel)
     if image.mode in ('RGBA', 'LA'):
-        # Create a white background
+        # Create a white background image
         background = Image.new('RGB', image.size, (255, 255, 255))
-        # Paste the image onto the background using the alpha channel as a mask
-        background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
-        image = background
+        # Paste the original image onto the background using the alpha channel as a mask
+        background.paste(image, mask=image.split()[3])  # Split to get the alpha channel
+        image = background  # Update the image variable to the new image without alpha
     elif image.mode != 'RGB':
-        # Convert image to RGB if it's in a different mode
+        # Convert image to 'RGB' mode if it's not already
         image = image.convert('RGB')
 
-    # Generate different resolutions
+    # Define the sizes for different resolutions
     sizes = {
         'largest': (1920, 1080),
         'medium': (1280, 720),
         'thumbnail': (200, 200),
     }
 
+    # Generate and save images in different resolutions
     for size_name, size in sizes.items():
         img_copy = image.copy()
         img_copy.thumbnail(size)
         save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, f'{name}.jpeg')
-        img_copy.save(save_path, 'JPEG')
-
+        # Save the image with the specified quality
+        img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
 
 @app.route('/')
 def index():
