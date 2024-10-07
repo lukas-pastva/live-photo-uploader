@@ -122,17 +122,6 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
         }
     });
 
-    // Handle abort event
-    xhr.addEventListener('abort', async function() {
-        document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-warning">Upload aborted.</div>';
-        // Hide the progress bar
-        progressContainer.style.display = 'none';
-        // Release Wake Lock
-        if ('wakeLock' in navigator) {
-            await releaseWakeLock();
-        }
-    });
-
     // Send the form data
     xhr.send(formData);
 });

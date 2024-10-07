@@ -7,7 +7,6 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import io
 import zipfile
-import time  # For testing purposes (artificial delay)
 
 app = Flask(__name__)
 
@@ -18,6 +17,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Configurable image quality via environment variable
 # Default quality is 100
 IMAGE_QUALITY = int(os.environ.get('IMAGE_QUALITY', '100'))
+
+# Configurable thumbnail quality (percentage)
+THUMBNAIL_QUALITY = 85
 
 # Set maximum upload size to 5GB (adjust as needed)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 * 1024  # 5 GB
@@ -107,14 +109,22 @@ def process_file(filepath, category):
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}{save_extension}')
             img_copy.save(save_path, original_format, quality=100)
-        else:
+        elif size_name == 'medium':
             # Resize to the target size
             img_copy.thumbnail(size)
-            # Save as JPEG
+            # Save as JPEG with default image quality
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}.jpeg')
             img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
+        elif size_name == 'thumbnail':
+            # Resize to the target size
+            img_copy.thumbnail(size)
+            # Save as JPEG with reduced quality
+            save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f'{name}.jpeg')
+            img_copy.save(save_path, 'JPEG', quality=THUMBNAIL_QUALITY)
 
 @app.route('/')
 def index():
