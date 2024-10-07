@@ -1,41 +1,11 @@
-body {
-    background-color: #f8f9fa;
-}
-
-.navbar {
-    margin-bottom: 20px;
-}
-
-.card-img-top {
-    /* Remove max-height to allow images to scale */
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-}
-
-/* Adjust styles for mobile devices */
-@media (max-width: 576px) {
-    .card-title {
-        font-size: 1.25rem;
-    }
-
-    .btn {
-        font-size: 1rem;
-        padding: 0.75rem 1.25rem;
-    }
-
-    .navbar-brand {
-        font-size: 1.5rem;
-    }
-}
 /* Custom styling for the HOME button in the navbar */
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
-    padding: .5rem 1rem;
+    padding: 0.5rem 1rem;
     background-color: #007bff; /* Bootstrap primary color */
     color: white !important;
-    border-radius: .25rem;
+    border-radius: 0.25rem;
 }
 
 /* Ensure the link looks like a button */
@@ -43,6 +13,7 @@ body {
     text-decoration: none;
     color: white;
 }
+
 /* Increase the font size of category buttons */
 .btn-outline-secondary {
     font-size: 1.1rem;
@@ -56,4 +27,22 @@ body {
 /* Adjust list-group-item padding for better alignment */
 .list-group-item {
     padding: 0.75rem 1.25rem;
+}
+
+/* Hover effect for category buttons */
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Hover effect for delete buttons */
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Optional: Style the video player for consistency */
+video.card-img-top {
+    height: 200px;
+    object-fit: cover;
 }

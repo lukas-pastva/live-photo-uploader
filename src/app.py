@@ -1,13 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort, Response
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort
 import os
 import shutil
 from PIL import Image
 import pyheif
-import uuid
 from werkzeug.utils import secure_filename
 import io
 import zipfile
 from flask import send_file
+
 
 app = Flask(__name__)
 
@@ -43,7 +43,7 @@ def process_file(filepath, category):
 
     if ext in video_extensions:
         # For videos, no processing is needed
-        # We can copy the video file to the 'largest' directory to keep consistency
+        # Copy the video file to the 'largest' directory to keep consistency
         save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, filename)
@@ -76,11 +76,13 @@ def process_file(filepath, category):
     if image.mode in ('RGBA', 'LA'):
         # Create a white background image
         background = Image.new('RGB', image.size, (255, 255, 255))
-        background.paste(image, mask=image.split()[-1])
-        image = background
-        original_format = 'JPEG'
+        # Paste the original image onto the background using the alpha channel as a mask
+        background.paste(image, mask=image.split()[-1])  # Use the alpha channel as mask
+        image = background  # Update the image variable to the new image without alpha
+        original_format = 'JPEG'  # Save as JPEG since transparency is removed
         save_extension = '.jpeg'
     elif image.mode != 'RGB':
+        # Convert image to 'RGB' mode if it's not already
         image = image.convert('RGB')
 
     # Define the sizes for different resolutions
@@ -94,14 +96,18 @@ def process_file(filepath, category):
     for size_name, size in sizes.items():
         img_copy = image.copy()
         if size_name == 'largest':
+            # Only resize if the image is larger than the target size
             if image.width > size[0] or image.height > size[1]:
                 img_copy.thumbnail(size)
+            # Save the image in the appropriate format with maximum quality
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}{save_extension}')
             img_copy.save(save_path, original_format, quality=100)
         else:
+            # Resize to the target size
             img_copy.thumbnail(size)
+            # Save as JPEG
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}.jpeg')
@@ -131,8 +137,13 @@ def category_view(category):
 def create_category():
     category = request.form.get('category_name')
     if category:
+        # Sanitize category name
+        category = secure_filename(category)
         category_path = os.path.join(app.config['UPLOAD_FOLDER'], category)
         os.makedirs(category_path, exist_ok=True)
+        # Create subdirectories
+        for sub_dir in ['source', 'largest', 'medium', 'thumbnail']:
+            os.makedirs(os.path.join(category_path, sub_dir), exist_ok=True)
     return redirect(url_for('index'))
 
 @app.route('/category/delete/<category>', methods=['POST'])
@@ -145,6 +156,7 @@ def delete_category(category):
 @app.route('/upload/<category>', methods=['GET', 'POST'])
 def upload_file(category):
     if request.method == 'POST':
+        # Check if the post request has the file part
         if 'photos[]' not in request.files:
             return 'No file part', 400
         files = request.files.getlist('photos[]')
@@ -175,7 +187,7 @@ def download_category(category):
     size = request.args.get('size', 'largest')
 
     # Validate the size parameter
-    valid_sizes = ['source', 'largest', 'medium', 'thumbnail']
+    valid_sizes = ['source', 'largest', 'medium']
     if size not in valid_sizes:
         return 'Invalid size parameter', 400
 
@@ -206,7 +218,7 @@ def download_category(category):
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
-        download_name=f'{category}_{size}_photos.zip'
+        download_name=f'{category}_{size}_files.zip'
     )
 
 if __name__ == '__main__':

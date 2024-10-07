@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Upload to {{ category }}</h1>
-<form action="" method="post" enctype="multipart/form-data">
+<h1>Upload to Category: {{ category }}</h1>
+<form action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data" class="mb-4">
     <div class="form-group">
-        <label for="photos">Choose photos</label>
-        <input type="file" name="photos[]" class="form-control-file" id="photos" accept="image/*,video/*" multiple>
+        <label for="photos">Select Photos and Videos</label>
+        <input type="file" name="photos[]" class="form-control-file" id="photos" accept="image/*,video/*" multiple required>
     </div>
-    <button type="submit" class="btn btn-primary btn-lg btn-block">Upload</button>
+    <button type="submit" class="btn btn-success btn-block">Upload</button>
 </form>
+<a href="{{ url_for('category_view', category=category) }}" class="btn btn-secondary btn-block">Back to Category</a>
 {% endblock %}
