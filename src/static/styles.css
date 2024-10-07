@@ -7,6 +7,24 @@ body {
 }
 
 .card-img-top {
-    max-height: 200px;
+    /* Remove max-height to allow images to scale */
+    width: 100%;
+    height: auto;
     object-fit: cover;
+}
+
+/* Adjust styles for mobile devices */
+@media (max-width: 576px) {
+    .card-title {
+        font-size: 1.25rem;
+    }
+
+    .btn {
+        font-size: 1rem;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+    }
 }
