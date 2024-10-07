@@ -45,17 +45,24 @@ def process_file(filepath, category):
             heif_file.mode,
             heif_file.stride,
         )
+        # Since HEIC is not widely supported, we'll convert it to JPEG
+        original_format = 'JPEG'
+        save_extension = '.jpeg'
     else:
         # Open other image formats
         image = Image.open(filepath)
+        original_format = image.format  # Get the original image format
+        save_extension = ext  # Use the original file extension
 
     # Handle images with transparency (alpha channel)
     if image.mode in ('RGBA', 'LA'):
         # Create a white background image
         background = Image.new('RGB', image.size, (255, 255, 255))
         # Paste the original image onto the background using the alpha channel as a mask
-        background.paste(image, mask=image.split()[3])  # Split to get the alpha channel
+        background.paste(image, mask=image.split()[-1])  # Use the alpha channel as mask
         image = background  # Update the image variable to the new image without alpha
+        original_format = 'JPEG'  # Save as JPEG since transparency is removed
+        save_extension = '.jpeg'
     elif image.mode != 'RGB':
         # Convert image to 'RGB' mode if it's not already
         image = image.convert('RGB')
@@ -70,12 +77,24 @@ def process_file(filepath, category):
     # Generate and save images in different resolutions
     for size_name, size in sizes.items():
         img_copy = image.copy()
-        img_copy.thumbnail(size)
-        save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, f'{name}.jpeg')
-        # Save the image with the specified quality
-        img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
+        if size_name == 'largest':
+            # Only resize if the image is larger than the target size
+            if image.width > size[0] or image.height > size[1]:
+                img_copy.thumbnail(size)
+            # Save the image in the original format with maximum quality
+            save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f'{name}{save_extension}')
+            img_copy.save(save_path, original_format, quality=100)
+        else:
+            # Resize to the target size
+            img_copy.thumbnail(size)
+            # Save as JPEG
+            save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f'{name}.jpeg')
+            img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
+
 
 @app.route('/')
 def index():
