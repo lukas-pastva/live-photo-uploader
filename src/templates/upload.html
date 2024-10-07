@@ -81,6 +81,7 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     xhr.upload.addEventListener('progress', function(e) {
         if (e.lengthComputable) {
             const percentComplete = Math.round((e.loaded / e.total) * 100);
+            console.log(`Upload progress: ${percentComplete}%`);
             progressBar.style.width = percentComplete + '%';
             progressBar.setAttribute('aria-valuenow', percentComplete);
             progressBar.textContent = percentComplete + '%';
@@ -113,6 +114,17 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     // Handle errors
     xhr.addEventListener('error', async function() {
         document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">An error occurred during the upload.</div>';
+        // Hide the progress bar
+        progressContainer.style.display = 'none';
+        // Release Wake Lock
+        if ('wakeLock' in navigator) {
+            await releaseWakeLock();
+        }
+    });
+
+    // Handle abort event
+    xhr.addEventListener('abort', async function() {
+        document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-warning">Upload aborted.</div>';
         // Hide the progress bar
         progressContainer.style.display = 'none';
         // Release Wake Lock

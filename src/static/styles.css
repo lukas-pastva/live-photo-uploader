@@ -47,16 +47,7 @@ video.card-img-top {
     object-fit: cover;
 }
 
-/* Style for the upload progress bar */
-.progress {
-    position: relative;
-}
-
+/* Style the progress bar text */
 .progress-bar {
-    transition: width 0.4s ease;
-}
-
-/* Style for upload status messages */
-#uploadStatus .alert {
-    font-size: 1rem;
+    font-weight: bold;
 }

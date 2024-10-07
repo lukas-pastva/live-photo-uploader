@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import io
 import zipfile
+import time  # For testing purposes (artificial delay)
 
 app = Flask(__name__)
 
@@ -18,8 +19,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Default quality is 100
 IMAGE_QUALITY = int(os.environ.get('IMAGE_QUALITY', '100'))
 
-# Set maximum upload size to 1GB (adjust as needed)
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 * 1024  # 1 GB
+# Set maximum upload size to 5GB (adjust as needed)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 * 1024  # 5 GB
 
 # Ensure the upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -225,7 +226,7 @@ def download_category(category):
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_size_error(e):
-    return jsonify({'status': 'fail', 'message': 'File too large. Maximum upload size is 1GB.'}), 413
+    return jsonify({'status': 'fail', 'message': 'File too large. Maximum upload size is 5GB.'}), 413
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
