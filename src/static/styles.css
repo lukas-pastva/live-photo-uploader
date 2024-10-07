@@ -28,3 +28,18 @@ body {
         font-size: 1.5rem;
     }
 }
+/* Custom styling for the HOME button in the navbar */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: .5rem 1rem;
+    background-color: #007bff; /* Bootstrap primary color */
+    color: white !important;
+    border-radius: .25rem;
+}
+
+/* Ensure the link looks like a button */
+.navbar-brand:hover {
+    text-decoration: none;
+    color: white;
+}
