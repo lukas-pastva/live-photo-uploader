@@ -1,13 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort, jsonify
 import os
 import shutil
 from PIL import Image
 import pyheif
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 import io
 import zipfile
-from flask import send_file
-
 
 app = Flask(__name__)
 
@@ -18,6 +17,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Configurable image quality via environment variable
 # Default quality is 100
 IMAGE_QUALITY = int(os.environ.get('IMAGE_QUALITY', '100'))
+
+# Set maximum upload size to 1GB (adjust as needed)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 * 1024  # 1 GB
 
 # Ensure the upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -158,10 +160,10 @@ def upload_file(category):
     if request.method == 'POST':
         # Check if the post request has the file part
         if 'photos[]' not in request.files:
-            return 'No file part', 400
+            return jsonify({'status': 'fail', 'message': 'No file part'}), 400
         files = request.files.getlist('photos[]')
         if not files or files[0].filename == '':
-            return 'No selected files', 400
+            return jsonify({'status': 'fail', 'message': 'No selected files'}), 400
         for file in files:
             if file and allowed_file(file.filename):
                 # Use secure filename
@@ -174,7 +176,7 @@ def upload_file(category):
 
                 # Process the file
                 process_file(filepath, category)
-        return redirect(url_for('category_view', category=category))
+        return jsonify({'status': 'success', 'message': 'Files uploaded successfully.'}), 200
     return render_template('upload.html', category=category)
 
 @app.route('/uploads/<path:filename>')
@@ -189,19 +191,19 @@ def download_category(category):
     # Validate the size parameter
     valid_sizes = ['source', 'largest', 'medium']
     if size not in valid_sizes:
-        return 'Invalid size parameter', 400
+        return jsonify({'status': 'fail', 'message': 'Invalid size parameter.'}), 400
 
     # Path to the directory containing the images of the specified size
     images_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
     if not os.path.exists(images_dir):
-        return 'Size not found', 404
+        return jsonify({'status': 'fail', 'message': 'Size not found.'}), 404
 
     # Collect all image file paths
     image_filenames = os.listdir(images_dir)
     image_paths = [os.path.join(images_dir, filename) for filename in image_filenames]
 
     if not image_filenames:
-        return 'No images to download', 404
+        return jsonify({'status': 'fail', 'message': 'No files to download.'}), 404
 
     # Create a ZIP file in memory
     zip_buffer = io.BytesIO()
@@ -220,6 +222,10 @@ def download_category(category):
         as_attachment=True,
         download_name=f'{category}_{size}_files.zip'
     )
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_size_error(e):
+    return jsonify({'status': 'fail', 'message': 'File too large. Maximum upload size is 1GB.'}), 413
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

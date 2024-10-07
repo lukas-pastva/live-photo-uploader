@@ -1,85 +1,128 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Upload to Category: {{ category }}</h1>
-<form id="uploadForm" action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data" class="mb-4">
+<form id="uploadForm" action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data">
     <div class="form-group">
         <label for="photos">Select Photos and Videos</label>
         <input type="file" name="photos[]" class="form-control-file" id="photos" accept="image/*,video/*" multiple required>
     </div>
     <button type="submit" class="btn btn-success btn-block">Upload</button>
 </form>
-<a href="{{ url_for('category_view', category=category) }}" class="btn btn-secondary btn-block">Back to Category</a>
 
-<!-- Loading Spinner -->
-<div id="loadingSpinner" style="display: none;" class="text-center mt-4">
-    <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Uploading...</span>
-    </div>
-    <p>Uploading, please do not lock your device.</p>
+<!-- Progress Bar Container -->
+<div class="progress mt-4" style="height: 25px; display: none;" id="uploadProgressContainer">
+    <div class="progress-bar" role="progressbar" style="width: 0%;" id="uploadProgressBar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
 </div>
 
-<!-- Confirmation Dialog Script -->
+<!-- Upload Status Message -->
+<div class="mt-3" id="uploadStatus"></div>
+
+<a href="{{ url_for('category_view', category=category) }}" class="btn btn-secondary btn-block mt-3">Back to Category</a>
+
+<!-- JavaScript to Handle AJAX Upload, Progress Bar, and Wake Lock -->
 <script>
-    let wakeLock = null;
+let wakeLock = null;
 
-    async function requestWakeLock() {
-        if ('wakeLock' in navigator) {
-            try {
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock active');
-                wakeLock.addEventListener('release', () => {
-                    console.log('Wake Lock released');
-                });
-            } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
-            }
+// Function to request Wake Lock
+async function requestWakeLock() {
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock active');
+        wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock released');
+        });
+    } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+    }
+}
+
+// Function to release Wake Lock
+async function releaseWakeLock() {
+    if (wakeLock !== null) {
+        await wakeLock.release();
+        wakeLock = null;
+        console.log('Wake Lock released manually');
+    }
+}
+
+document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const filesInput = document.getElementById('photos');
+    const files = filesInput.files;
+    if (files.length === 0) {
+        alert('Please select at least one file to upload.');
+        return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('photos[]', files[i]);
+    }
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('POST', this.action, true);
+
+    // Show the progress bar
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressBar.setAttribute('aria-valuenow', 0);
+    progressBar.textContent = '0%';
+
+    // Request Wake Lock
+    if ('wakeLock' in navigator) {
+        requestWakeLock();
+    }
+
+    // Update progress bar
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressBar.setAttribute('aria-valuenow', percentComplete);
+            progressBar.textContent = percentComplete + '%';
+        }
+    });
+
+    // Handle successful upload
+    xhr.addEventListener('load', async function() {
+        if (xhr.status === 200) {
+            document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-success">Upload successful!</div>';
+            // Optionally, reset the form
+            document.getElementById('uploadForm').reset();
         } else {
-            console.warn('Wake Lock API not supported by this browser.');
-        }
-    }
-
-    async function releaseWakeLock() {
-        if (wakeLock !== null) {
-            await wakeLock.release();
-            wakeLock = null;
-            console.log('Wake Lock released manually');
-        }
-    }
-
-    document.getElementById('uploadForm').addEventListener('submit', async (event) => {
-        event.preventDefault(); // Prevent default form submission
-
-        // Show loading spinner
-        document.getElementById('loadingSpinner').style.display = 'block';
-
-        // Request Wake Lock
-        await requestWakeLock();
-
-        const form = event.target;
-        const formData = new FormData(form);
-
-        try {
-            const response = await fetch(form.action, {
-                method: form.method,
-                body: formData
-            });
-
-            if (response.ok) {
-                alert('Upload successful!');
-                form.reset(); // Reset the form
-            } else {
-                alert('Upload failed.');
+            let response;
+            try {
+                response = JSON.parse(xhr.responseText);
+            } catch {
+                response = { message: 'Upload failed. Please try again.' };
             }
-        } catch (error) {
-            console.error('Error uploading:', error);
-            alert('An error occurred during upload.');
-        } finally {
-            // Hide loading spinner
-            document.getElementById('loadingSpinner').style.display = 'none';
-
-            // Release Wake Lock after upload completes
+            document.getElementById('uploadStatus').innerHTML = `<div class="alert alert-danger">${response.message || 'Upload failed. Please try again.'}</div>`;
+        }
+        // Hide the progress bar after completion
+        progressContainer.style.display = 'none';
+        // Release Wake Lock
+        if ('wakeLock' in navigator) {
             await releaseWakeLock();
         }
     });
+
+    // Handle errors
+    xhr.addEventListener('error', async function() {
+        document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">An error occurred during the upload.</div>';
+        // Hide the progress bar
+        progressContainer.style.display = 'none';
+        // Release Wake Lock
+        if ('wakeLock' in navigator) {
+            await releaseWakeLock();
+        }
+    });
+
+    // Send the form data
+    xhr.send(formData);
+});
 </script>
 {% endblock %}
