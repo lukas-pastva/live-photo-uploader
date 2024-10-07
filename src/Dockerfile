@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     libheif-dev \
     libffi-dev \
     build-essential \
+    s3cmd \
+    s3fs \
     vim
 
 # Set work directory
