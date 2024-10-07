@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Category: {{ category }}</h1>
+<a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success mb-3">Upload Photo</a>
+<div class="row">
+    {% for image in images %}
+    <div class="col-md-3">
+        <div class="card mb-3">
+            <img src="{{ url_for('static', filename='uploads/' + category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
+        </div>
+    </div>
+    {% else %}
+    <p>No images in this category.</p>
+    {% endfor %}
+</div>
+{% endblock %}

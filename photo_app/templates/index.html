@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Categories</h1>
+<form action="{{ url_for('create_category') }}" method="post" class="form-inline mb-3">
+    <input type="text" name="category_name" class="form-control mr-2" placeholder="New Category">
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+<ul class="list-group">
+    {% for category in categories %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('category_view', category=category) }}">{{ category }}</a>
+        <form action="{{ url_for('delete_category', category=category) }}" method="post">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </li>
+    {% else %}
+    <li class="list-group-item">No categories available.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
