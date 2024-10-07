@@ -103,22 +103,22 @@ def delete_category(category):
 def upload_file(category):
     if request.method == 'POST':
         # Check if the post request has the file part
-        if 'photo' not in request.files:
+        if 'photos[]' not in request.files:
             return 'No file part', 400
-        file = request.files['photo']
-        if file.filename == '':
-            return 'No selected file', 400
-        if file and allowed_file(file.filename):
-            # Save the original file
-            category_path = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
-            os.makedirs(category_path, exist_ok=True)
-            filepath = os.path.join(category_path, file.filename)
-            file.save(filepath)
+        files = request.files.getlist('photos[]')
+        if not files or files[0].filename == '':
+            return 'No selected files', 400
+        for file in files:
+            if file and allowed_file(file.filename):
+                # Save the original file
+                category_path = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+                os.makedirs(category_path, exist_ok=True)
+                filepath = os.path.join(category_path, file.filename)
+                file.save(filepath)
 
-            # Process the file
-            process_file(filepath, category)
-
-            return redirect(url_for('category_view', category=category))
+                # Process the file
+                process_file(filepath, category)
+        return redirect(url_for('category_view', category=category))
     return render_template('upload.html', category=category)
 
 @app.route('/uploads/<path:filename>')
