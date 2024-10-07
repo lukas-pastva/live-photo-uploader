@@ -46,3 +46,9 @@ video.card-img-top {
     height: 200px;
     object-fit: cover;
 }
+
+/* Loading Spinner Styling */
+#loadingSpinner p {
+    margin-top: 10px;
+    font-size: 1rem;
+}

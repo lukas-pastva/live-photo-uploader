@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Upload to Category: {{ category }}</h1>
-<form action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data" class="mb-4">
+<form id="uploadForm" action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data" class="mb-4">
     <div class="form-group">
         <label for="photos">Select Photos and Videos</label>
         <input type="file" name="photos[]" class="form-control-file" id="photos" accept="image/*,video/*" multiple required>
@@ -9,4 +9,77 @@
     <button type="submit" class="btn btn-success btn-block">Upload</button>
 </form>
 <a href="{{ url_for('category_view', category=category) }}" class="btn btn-secondary btn-block">Back to Category</a>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" style="display: none;" class="text-center mt-4">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Uploading...</span>
+    </div>
+    <p>Uploading, please do not lock your device.</p>
+</div>
+
+<!-- Confirmation Dialog Script -->
+<script>
+    let wakeLock = null;
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        } else {
+            console.warn('Wake Lock API not supported by this browser.');
+        }
+    }
+
+    async function releaseWakeLock() {
+        if (wakeLock !== null) {
+            await wakeLock.release();
+            wakeLock = null;
+            console.log('Wake Lock released manually');
+        }
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent default form submission
+
+        // Show loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        // Request Wake Lock
+        await requestWakeLock();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Upload successful!');
+                form.reset(); // Reset the form
+            } else {
+                alert('Upload failed.');
+            }
+        } catch (error) {
+            console.error('Error uploading:', error);
+            alert('An error occurred during upload.');
+        } finally {
+            // Hide loading spinner
+            document.getElementById('loadingSpinner').style.display = 'none';
+
+            // Release Wake Lock after upload completes
+            await releaseWakeLock();
+        }
+    });
+</script>
 {% endblock %}
