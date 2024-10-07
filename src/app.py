@@ -1,8 +1,12 @@
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort, Response
 import os
 import shutil
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 from PIL import Image
 import pyheif
+import uuid
+from werkzeug.utils import secure_filename
+import io
+import zipfile
 
 app = Flask(__name__)
 
@@ -124,6 +128,34 @@ def upload_file(category):
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/download_category/<category>')
+def download_category(category):
+    images_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+    if not os.path.exists(images_dir):
+        return 'Category not found', 404
+
+    # Collect all image file paths
+    image_filenames = os.listdir(images_dir)
+    image_paths = [os.path.join(images_dir, filename) for filename in image_filenames]
+
+    # Create a ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        for file_path, filename in zip(image_paths, image_filenames):
+            # Add each file to the ZIP archive
+            zip_file.write(file_path, arcname=filename)
+
+    # Set the pointer to the beginning of the stream
+    zip_buffer.seek(0)
+
+    # Send the ZIP file as a response
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        attachment_filename=f'{category}_photos.zip'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
