@@ -7,6 +7,7 @@ import uuid
 from werkzeug.utils import secure_filename
 import io
 import zipfile
+from flask import send_file
 
 app = Flask(__name__)
 
@@ -131,6 +132,7 @@ def uploaded_file(filename):
 
 @app.route('/download_category/<category>')
 def download_category(category):
+    # Path to the directory containing the images (choose desired size)
     images_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
     if not os.path.exists(images_dir):
         return 'Category not found', 404
@@ -154,7 +156,7 @@ def download_category(category):
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
-        attachment_filename=f'{category}_photos.zip'
+        download_name=f'{category}_photos.zip'
     )
 
 if __name__ == '__main__':
