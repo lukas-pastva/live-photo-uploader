@@ -43,3 +43,17 @@ body {
     text-decoration: none;
     color: white;
 }
+/* Increase the font size of category buttons */
+.btn-outline-secondary {
+    font-size: 1.1rem;
+}
+
+/* Ensure the delete button maintains its size */
+.btn-danger {
+    min-width: 80px;
+}
+
+/* Adjust list-group-item padding for better alignment */
+.list-group-item {
+    padding: 0.75rem 1.25rem;
+}

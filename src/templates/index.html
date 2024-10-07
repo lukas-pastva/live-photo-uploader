@@ -1,18 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Categories</h1>
-<form action="{{ url_for('create_category') }}" method="post" class="mb-3">
+<form action="{{ url_for('create_category') }}" method="post" class="mb-4">
     <div class="form-group">
-        <input type="text" name="category_name" class="form-control mb-2" placeholder="New Category">
+        <input type="text" name="category_name" class="form-control mb-2" placeholder="New Category" required>
         <button type="submit" class="btn btn-primary btn-lg btn-block">Create Category</button>
     </div>
 </form>
 <ul class="list-group">
     {% for category in categories %}
-    <li class="list-group-item d-flex justify-content-between align-items-center flex-column flex-sm-row">
-        <a href="{{ url_for('category_view', category=category) }}">{{ category }}</a>
-        <form action="{{ url_for('delete_category', category=category) }}" method="post" class="mt-2 mt-sm-0" onsubmit="return confirmDelete('{{ category }}');">
-            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <!-- Category Button -->
+        <a href="{{ url_for('category_view', category=category) }}" class="btn btn-outline-secondary btn-block text-left">
+            {{ category }}
+        </a>
+        <!-- Delete Button -->
+        <form action="{{ url_for('delete_category', category=category) }}" method="post" onsubmit="return confirmDelete('{{ category }}');" class="mb-0 ml-2">
+            <button type="submit" class="btn btn-danger">Delete</button>
         </form>
     </li>
     {% else %}
@@ -20,7 +24,7 @@
     {% endfor %}
 </ul>
 
-<!-- Add JavaScript to handle the confirmation -->
+<!-- Confirmation Dialog Script -->
 <script>
 function confirmDelete(categoryName) {
     return confirm("This will delete all photos in the category '" + categoryName + "'. Are you sure?");
