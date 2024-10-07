@@ -81,7 +81,7 @@ def process_file(filepath, category):
             # Only resize if the image is larger than the target size
             if image.width > size[0] or image.height > size[1]:
                 img_copy.thumbnail(size)
-            # Save the image in the original format with maximum quality
+            # Save the image in the appropriate format with maximum quality
             save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size_name)
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f'{name}{save_extension}')
@@ -96,6 +96,7 @@ def process_file(filepath, category):
             img_copy.save(save_path, 'JPEG', quality=IMAGE_QUALITY)
 
 
+
 @app.route('/')
 def index():
     categories = os.listdir(app.config['UPLOAD_FOLDER'])
@@ -103,10 +104,18 @@ def index():
 
 @app.route('/category/<category>')
 def category_view(category):
-    # Get filenames from the 'source' directory
-    source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
-    images = os.listdir(source_dir) if os.path.exists(source_dir) else []
-    return render_template('category.html', category=category, images=images)
+    # Get filenames from the 'largest' directory
+    largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+    if os.path.exists(largest_dir):
+        images = os.listdir(largest_dir)
+        image_info_list = []
+        for image in images:
+            name, ext = os.path.splitext(image)
+            image_info_list.append({'name': name, 'ext': ext.lower(), 'filename': image})
+    else:
+        image_info_list = []
+    return render_template('category.html', category=category, images=image_info_list)
+
 
 @app.route('/category/create', methods=['POST'])
 def create_category():
