@@ -36,6 +36,17 @@ def process_file(filepath, category):
         # Open other image formats
         image = Image.open(filepath)
 
+    # Handle images with alpha channel
+    if image.mode in ('RGBA', 'LA'):
+        # Create a white background
+        background = Image.new('RGB', image.size, (255, 255, 255))
+        # Paste the image onto the background using the alpha channel as a mask
+        background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
+        image = background
+    elif image.mode != 'RGB':
+        # Convert image to RGB if it's in a different mode
+        image = image.convert('RGB')
+
     # Generate different resolutions
     sizes = {
         'largest': (1920, 1080),
@@ -50,6 +61,7 @@ def process_file(filepath, category):
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, f'{name}.jpeg')
         img_copy.save(save_path, 'JPEG')
+
 
 @app.route('/')
 def index():

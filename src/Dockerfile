@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     libheif1 \
     libheif-dev \
     libffi-dev \
-    build-essential
+    build-essential \
+    vim
 
 # Set work directory
 WORKDIR /app

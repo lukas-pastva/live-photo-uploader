@@ -6,8 +6,12 @@
     {% for image in images %}
     <div class="col-md-3">
         <div class="card mb-3">
-            <img src="{{ url_for('static', filename='uploads/' + category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
             <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + image) }}" class="card-img-top" alt="{{ image }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ image }}</h5>
+                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + image) }}" class="btn btn-primary" download>Download Largest</a>
+                <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + image) }}" class="btn btn-secondary" download>Download Medium</a>
+            </div>
         </div>
     </div>
     {% else %}
