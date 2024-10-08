@@ -4,10 +4,10 @@
 <a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg btn-block mb-3">Upload Photo/Video</a>
 
 <!-- Download All Files Buttons -->
-<div class="btn-group btn-group-vertical btn-block mb-3" role="group" aria-label="Download All Sizes">
-    <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary">Download All Source</a>
-    <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info">Download All Largest</a>
-    <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary">Download All Medium</a>
+<div class="btn-group btn-group-sm btn-block mb-3" role="group" aria-label="Download All Sizes">
+    <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary" title="Download All Source">↓</a>
+    <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info" title="Download All Largest">↓</a>
+    <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary" title="Download All Medium">↓</a>
 </div>
 
 <div class="row">
@@ -30,7 +30,7 @@
                 </div>
             {% endif %}
             <div class="card-body d-flex justify-content-between align-items-center">
-                <div class="btn-group" role="group" aria-label="Download Buttons">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Download Buttons">
                     <!-- Individual download links with abbreviations -->
                     <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
                     {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
@@ -54,7 +54,7 @@
 </div>
 {% endblock %}
 
-<!-- Confirmation Dialog Script -->
+<!-- Confirmation Dialog and AJAX Deletion Script -->
 <script>
 function confirmDelete(filename) {
     return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
@@ -64,11 +64,11 @@ function confirmDelete(filename) {
 document.querySelectorAll('form[action^="/delete_photo"]').forEach(form => {
     form.addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent the form from submitting traditionally
-        if (!confirmDelete(this.getAttribute('data-filename'))) {
+        const filename = this.action.split('/').pop(); // Extract filename from URL
+        if (!confirmDelete(filename)) {
             return;
         }
         const url = this.action;
-        const card = this.closest('.card').parentElement; // Get the card's column div
 
         fetch(url, {
             method: 'POST',
@@ -82,6 +82,7 @@ document.querySelectorAll('form[action^="/delete_photo"]').forEach(form => {
             if (data.status === 'success') {
                 alert(data.message);
                 // Remove the card from the DOM
+                const card = this.closest('.card').parentElement;
                 card.remove();
             } else {
                 alert(data.message);

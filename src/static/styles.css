@@ -21,7 +21,7 @@
 
 /* Ensure the delete button maintains its size */
 .btn-danger {
-    min-width: 80px;
+    min-width: 40px;
 }
 
 /* Adjust list-group-item padding for better alignment */
@@ -57,6 +57,8 @@ video.card-img-top {
     border-top-left-radius: 0.25rem;
     border-top-right-radius: 0.25rem;
 }
+/* static/styles.css */
+
 /* Ensure all buttons in the card body have consistent width */
 .card-body .btn {
     width: 35px; /* Adjust as needed to match other buttons */
@@ -67,5 +69,32 @@ video.card-img-top {
 
 /* Adjust the 'X' delete button to match the download buttons */
 .card-body .btn-danger {
-    width: 35px; /* Same width as download buttons */
+    width: 40px; /* Set width to 40px as per requirement */
+    padding: 0.25rem 0.5rem;
+}
+
+/* Ensure the 'Download All' buttons are side by side and narrow */
+.btn-group.btn-group-sm.btn-block {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-group.btn-group-sm.btn-block .btn {
+    flex: 1;
+    margin-right: 5px;
+}
+
+.btn-group.btn-group-sm.btn-block .btn:last-child {
+    margin-right: 0;
+}
+
+/* Optional: Add hover effects for better UX */
+.btn-group.btn-group-sm.btn-block .btn:hover {
+    opacity: 0.8;
+}
+
+/* Optional: Adjust video height for consistency */
+video.card-img-top {
+    height: 200px;
+    object-fit: cover;
 }
