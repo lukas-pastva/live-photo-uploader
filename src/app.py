@@ -234,34 +234,46 @@ def download_category(category):
         download_name=f'{category}_{size}_files.zip'
     )
 
-@app.route('/delete_file/<category>/<filename>', methods=['POST'])
-def delete_file(category, filename):
-    # Define all relevant directories
-    directories = ['source', 'largest', 'medium', 'thumbnail']
+@app.route('/delete_photo/<category>/<filename>', methods=['POST'])
+def delete_photo(category, filename):
+    # Define all sizes to delete
+    sizes = ['source', 'largest', 'medium', 'thumbnail']
     success = True
     messages = []
 
-    for directory in directories:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], category, directory, filename)
+    for size in sizes:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], category, size, filename)
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
             except Exception as e:
                 success = False
-                messages.append(f'Error deleting from {directory}: {str(e)}')
-    
+                messages.append(f'Error deleting {size} version: {str(e)}')
+        else:
+            # File does not exist
+            pass  # You can choose to add a message if desired
+
     if success:
         return jsonify({'status': 'success', 'message': f"'{filename}' has been deleted successfully."}), 200
     else:
         return jsonify({'status': 'fail', 'message': ' '.join(messages)}), 500
 
-@app.route('/download_file/<category>/<size>/<filename>')
-def download_file(category, size, filename):
-    # Path to the specific file
-    file_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
-    if not os.path.exists(os.path.join(file_dir, filename)):
+@app.route('/download_single/<category>/<size>/<filename>')
+def download_single(category, size, filename):
+    # Validate size
+    valid_sizes = ['source', 'largest', 'medium', 'thumbnail']
+    if size not in valid_sizes:
         abort(404)
-    return send_from_directory(file_dir, filename, as_attachment=True)
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], category, size, filename)
+    if not os.path.exists(file_path):
+        abort(404)
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename
+    )
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_size_error(e):
