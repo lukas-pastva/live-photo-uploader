@@ -31,15 +31,18 @@
             {% endif %}
             <div class="card-body">
                 <h5 class="card-title text-truncate">{{ file.filename }}</h5>
-                <!-- Individual download links -->
-                <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm btn-block mb-2" download>Download Source</a>
-                {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
-                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Largest</a>
-                    <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary btn-sm btn-block mb-2" download>Download Medium</a>
-                {% else %}
-                    <!-- For videos, only source and largest are available -->
-                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm btn-block mb-2" download>Download Video</a>
-                {% endif %}
+                
+                <!-- Download Buttons Group -->
+                <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Download Sizes">
+                    <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary" download title="Download Medium (S)">S</a>
+                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info" download title="Download Largest (M)">M</a>
+                    <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary" download title="Download Source (L)">L</a>
+                </div>
+                
+                <!-- Delete Button -->
+                <form action="{{ url_for('delete_file', category=category, filename=file.filename) }}" method="post" onsubmit="return confirmDelete('{{ file.filename }}');" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Delete {{ file.filename }}">Delete</button>
+                </form>
             </div>
         </div>
     </div>
@@ -48,3 +51,10 @@
     {% endfor %}
 </div>
 {% endblock %}
+
+<!-- Confirmation Dialog Script -->
+<script>
+function confirmDelete(filename) {
+    return confirm("Are you sure you want to delete '" + filename + "'?");
+}
+</script>
