@@ -190,6 +190,10 @@ def upload_file(category):
         return jsonify({'status': 'success', 'message': 'Files uploaded successfully.'}), 200
     return render_template('upload.html', category=category)
 
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/download_category/<category>')
 def download_category(category):
     # Get the size parameter from the query string
@@ -232,31 +236,32 @@ def download_category(category):
 
 @app.route('/delete_file/<category>/<filename>', methods=['POST'])
 def delete_file(category, filename):
-    """
-    Deletes a specific file and its associated processed files.
-    """
-    # Define the paths for all sizes
-    sizes = ['source', 'largest', 'medium', 'thumbnail']
-    deleted = False
+    # Define all relevant directories
+    directories = ['source', 'largest', 'medium', 'thumbnail']
+    success = True
+    messages = []
 
-    for size in sizes:
-        # For videos, there might not be medium and thumbnail sizes
-        if size in ['medium', 'thumbnail'] and filename.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-            continue  # Skip sizes that don't exist for videos
-
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], category, size, filename)
+    for directory in directories:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], category, directory, filename)
         if os.path.exists(file_path):
-            os.remove(file_path)
-            deleted = True
-
-    if deleted:
-        return redirect(url_for('category_view', category=category))
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                success = False
+                messages.append(f'Error deleting from {directory}: {str(e)}')
+    
+    if success:
+        return jsonify({'status': 'success', 'message': f"'{filename}' has been deleted successfully."}), 200
     else:
-        return jsonify({'status': 'fail', 'message': 'File not found.'}), 404
+        return jsonify({'status': 'fail', 'message': ' '.join(messages)}), 500
 
-@app.route('/uploads/<path:filename>')
-def serve_uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/download_file/<category>/<size>/<filename>')
+def download_file(category, size, filename):
+    # Path to the specific file
+    file_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
+    if not os.path.exists(os.path.join(file_dir, filename)):
+        abort(404)
+    return send_from_directory(file_dir, filename, as_attachment=True)
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_size_error(e):

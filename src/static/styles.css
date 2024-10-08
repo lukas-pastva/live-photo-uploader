@@ -47,7 +47,13 @@ video.card-img-top {
     object-fit: cover;
 }
 
-/* Style the progress bar text */
-.progress-bar {
-    font-weight: bold;
+/* Optional: Adjust media card shadow and border */
+.card {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-img-top {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
 }

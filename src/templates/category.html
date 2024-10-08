@@ -12,7 +12,7 @@
 
 <div class="row">
     {% for file in files %}
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3" id="media-card-{{ loop.index }}">
         <div class="card mb-3">
             {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
                 <!-- Display image thumbnail -->
@@ -31,18 +31,20 @@
             {% endif %}
             <div class="card-body">
                 <h5 class="card-title text-truncate">{{ file.filename }}</h5>
-                
-                <!-- Download Buttons Group -->
-                <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Download Sizes">
-                    <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary" download title="Download Medium (S)">S</a>
-                    <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info" download title="Download Largest (M)">M</a>
-                    <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary" download title="Download Source (L)">L</a>
+                <!-- Download Buttons: S for Medium, M for Largest, L for Source -->
+                <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Download Buttons">
+                    {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
+                        <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary" download title="Download Medium Size">S</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info" download title="Download Largest Size">M</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary" download title="Download Source File">L</a>
+                    {% else %}
+                        <!-- For videos, only Source and Largest are available -->
+                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info" download title="Download Video">M</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary" download title="Download Source File">L</a>
+                    {% endif %}
                 </div>
-                
                 <!-- Delete Button -->
-                <form action="{{ url_for('delete_file', category=category, filename=file.filename) }}" method="post" onsubmit="return confirmDelete('{{ file.filename }}');" class="d-inline">
-                    <button type="submit" class="btn btn-danger btn-sm" title="Delete {{ file.filename }}">Delete</button>
-                </form>
+                <button type="button" class="btn btn-danger btn-sm btn-block" onclick="deleteMedia('{{ category }}', '{{ file.filename }}', {{ loop.index }})">Delete</button>
             </div>
         </div>
     </div>
@@ -50,11 +52,35 @@
     <p>No files in this category.</p>
     {% endfor %}
 </div>
+
 {% endblock %}
 
-<!-- Confirmation Dialog Script -->
+<!-- JavaScript to Handle AJAX Deletion -->
 <script>
-function confirmDelete(filename) {
-    return confirm("Are you sure you want to delete '" + filename + "'?");
+function deleteMedia(category, filename, index) {
+    if (!confirm("Are you sure you want to delete '" + filename + "'?")) {
+        return;
+    }
+
+    fetch(`/delete_file/${category}/${filename}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove the media card from the DOM
+            const mediaCard = document.getElementById(`media-card-${index}`);
+            if (mediaCard) {
+                mediaCard.remove();
+            }
+            alert(data.message);
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the file.');
+    });
 }
 </script>
