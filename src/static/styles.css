@@ -57,3 +57,15 @@ video.card-img-top {
     border-top-left-radius: 0.25rem;
     border-top-right-radius: 0.25rem;
 }
+/* Ensure all buttons in the card body have consistent width */
+.card-body .btn {
+    width: 35px; /* Adjust as needed to match other buttons */
+    text-align: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Adjust the 'X' delete button to match the download buttons */
+.card-body .btn-danger {
+    width: 35px; /* Same width as download buttons */
+}

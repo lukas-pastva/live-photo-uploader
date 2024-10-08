@@ -30,19 +30,19 @@
                 </div>
             {% endif %}
             <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
+                <div class="btn-group" role="group" aria-label="Download Buttons">
                     <!-- Individual download links with abbreviations -->
-                    <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm mr-1" download title="Source (L)">L</a>
+                    <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
                     {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
-                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm mr-1" download title="Largest (M)">M</a>
-                        <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary btn-sm mr-1" download title="Medium (S)">S</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm" download title="Largest (M)">M</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary btn-sm" download title="Medium (S)">S</a>
                     {% else %}
                         <!-- For videos, only Source and Largest are available -->
-                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm mr-1" download title="Video (M)">M</a>
+                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm" download title="Video (M)">M</a>
                     {% endif %}
                 </div>
                 <!-- Delete Button -->
-                <form action="{{ url_for('delete_photo', category=category, filename=file.filename) }}" method="post" onsubmit="return confirmDelete('{{ file.filename }}');" class="mb-0">
+                <form action="{{ url_for('delete_photo', category=category, filename=file.filename) }}" method="post" class="mb-0">
                     <button type="submit" class="btn btn-danger btn-sm" title="Delete">X</button>
                 </form>
             </div>
@@ -56,38 +56,41 @@
 
 <!-- Confirmation Dialog Script -->
 <script>
-    function confirmDelete(filename) {
-        return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
-    }
-    
-    // Handle deletion without page reload
-    document.querySelectorAll('form[action^="/delete_photo"]').forEach(form => {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the form from submitting traditionally
-            const url = this.action;
-            const card = this.closest('.card').parentElement; // Get the card's column div
-    
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    // Remove the card from the DOM
-                    card.remove();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the photo.');
-            });
+function confirmDelete(filename) {
+    return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
+}
+
+// Handle deletion without page reload
+document.querySelectorAll('form[action^="/delete_photo"]').forEach(form => {
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the form from submitting traditionally
+        if (!confirmDelete(this.getAttribute('data-filename'))) {
+            return;
+        }
+        const url = this.action;
+        const card = this.closest('.card').parentElement; // Get the card's column div
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                // Remove the card from the DOM
+                card.remove();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the photo.');
         });
     });
-    </script>
+});
+</script>

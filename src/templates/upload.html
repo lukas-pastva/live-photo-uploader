@@ -81,7 +81,6 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     xhr.upload.addEventListener('progress', function(e) {
         if (e.lengthComputable) {
             const percentComplete = Math.round((e.loaded / e.total) * 100);
-            console.log(`Upload progress: ${percentComplete}%`);
             progressBar.style.width = percentComplete + '%';
             progressBar.setAttribute('aria-valuenow', percentComplete);
             progressBar.textContent = percentComplete + '%';
@@ -91,17 +90,16 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     // Handle successful upload
     xhr.addEventListener('load', async function() {
         if (xhr.status === 200) {
-            document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-success">Upload successful!</div>';
-            // Optionally, reset the form
-            document.getElementById('uploadForm').reset();
-        } else {
-            let response;
-            try {
-                response = JSON.parse(xhr.responseText);
-            } catch {
-                response = { message: 'Upload failed. Please try again.' };
+            const response = JSON.parse(xhr.responseText);
+            if (response.status === 'success') {
+                document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-success">' + response.message + '</div>';
+                // Optionally, reset the form
+                document.getElementById('uploadForm').reset();
+            } else {
+                document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">' + response.message + '</div>';
             }
-            document.getElementById('uploadStatus').innerHTML = `<div class="alert alert-danger">${response.message || 'Upload failed. Please try again.'}</div>`;
+        } else {
+            document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">Upload failed. Please try again.</div>';
         }
         // Hide the progress bar after completion
         progressContainer.style.display = 'none';
