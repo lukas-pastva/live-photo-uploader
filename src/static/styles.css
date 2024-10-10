@@ -142,3 +142,52 @@ dialog {
 dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
 }
+/* static/styles.css */
+
+/* [Existing styles remain unchanged] */
+
+/* Additional Styling */
+
+/* Style the tree container with a border and padding */
+.tree-container {
+    border: 1px solid #ced4da; /* Bootstrap's default border color */
+    border-radius: 0.25rem; /* Rounded corners */
+    padding: 15px;
+    background-color: #f8f9fa; /* Light background for contrast */
+    max-height: 600px; /* Set a max height if needed */
+    overflow-y: auto; /* Add scroll if content exceeds max height */
+}
+
+/* Adjust Bootstrap Treeview text size and spacing */
+#category-tree .treeview-item {
+    font-size: 1.2rem; /* Increased text size */
+    padding: 10px 20px; /* Increased padding for easier clicking */
+}
+
+#category-tree .tree-icon {
+    font-size: 1.2rem; /* Increased icon size */
+    margin-right: 15px; /* Increased space between icon and text */
+}
+
+/* Optional: Enhance the appearance of the tree nodes */
+#category-tree .treeview-item:hover {
+    background-color: #e9ecef; /* Light hover effect */
+    border-radius: 0.25rem;
+}
+
+/* Ensure the tree view is responsive */
+@media (max-width: 767.98px) {
+    .tree-container {
+        padding: 10px;
+    }
+    
+    #category-tree .treeview-item {
+        font-size: 1rem;
+        padding: 8px 15px;
+    }
+    
+    #category-tree .tree-icon {
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+}
