@@ -113,19 +113,22 @@ video.card-img-top {
     padding: 0.25rem; /* Reduced padding */
 }
 
-/* Additional Styling */
 
-/* Increase jsTree text size and adjust tree structure */
-#category-tree .jstree-anchor {
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem; /* Increased text size */
+/* Increase Bootstrap Treeview text size and adjust tree structure */
+#category-tree .treeview-item {
+    font-size: 1.8rem; /* Further increased text size */
+    padding: 15px 20px; /* Increased padding for easier clicking */
 }
 
-#category-tree .jstree-anchor .jstree-icon {
-    width: 24px; /* Increased icon size */
-    height: 24px;
-    margin-right: 10px; /* Space between icon and text */
+#category-tree .tree-icon {
+    font-size: 1.5rem; /* Increased icon size */
+    margin-right: 15px; /* Increased space between icon and text */
+}
+
+/* Optionally, adjust the tree's overall width */
+#category-tree {
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 /* Style the dialog */

@@ -9,7 +9,7 @@
     <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary" title="Download All Original">↓ original</a>
     <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info" title="Download All Large">↓ large</a>
     <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary" title="Download All Medium">↓ medium</a>
-    <!-- Download All Videos Button -->
+    <!-- Download Videos Button -->
     <a href="{{ url_for('download_videos', category=category) }}" class="btn btn-warning" title="Download Videos">↓ videos</a>
 </div>
 
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     galleryElements.forEach(el => {
         items.push({
-            src: el.getAttribute('href'),
+            src: el.getAttribute('data-pswp-src'),
             msrc: el.querySelector('img').getAttribute('src'),
             title: el.getAttribute('data-title'),
             w: 0, // to be set

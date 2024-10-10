@@ -1,59 +1,59 @@
 <!-- templates/index.html -->
 {% extends 'base.html' %}
 {% block content %}
-<h1>Categories</h1>
-<form action="{{ url_for('create_category') }}" method="post" class="mb-4">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        {{ form.category_name(class="form-control mb-2", placeholder="New Category") }}
-        {{ form.submit(class="btn btn-primary btn-lg btn-block") }}
+<div class="row">
+    <div class="col-md-4">
+        <h2>Categories</h2>
+        <div id="category-tree"></div>
+        <!-- Form to create a new category -->
+        <form action="{{ url_for('create_category') }}" method="post" class="mt-3">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.category_name.label(class="form-label") }}
+                {{ form.category_name(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
     </div>
-</form>
+    <div class="col-md-8">
+        <!-- Display categories or other content here -->
+        {% if categories %}
+            <ul class="list-group">
+                {% for category in categories %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('category_view', category=category) }}">{{ category }}</a>
+                        <form action="{{ url_for('delete_category', category=category) }}" method="post" class="float-right">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No categories available.</p>
+        {% endif %}
+    </div>
+</div>
 
-<!-- jsTree Container -->
-<div id="category-tree"></div>
-
-<!-- Confirmation Dialog Script -->
+<!-- Initialize Bootstrap Treeview -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Process categories to create a hierarchical structure
-    const categories = {{ categories | tojson }};
-    const treeData = [];
+$(document).ready(function(){
+    // Use the dynamic treeData passed from Flask
+    var treeData = {{ treeData|tojson }};
 
-    categories.forEach(category => {
-        const parts = category.split('-');
-        let currentLevel = treeData;
-
-        parts.forEach((part, index) => {
-            let existingNode = currentLevel.find(node => node.text === part);
-            if (!existingNode) {
-                existingNode = {
-                    text: part,
-                    children: [],
-                    state: { opened: false }
-                };
-                currentLevel.push(existingNode);
-            }
-            if (index === parts.length - 1) {
-                // Add the URL for the leaf node
-                existingNode.a_attr = { href: "{{ url_for('category_view', category='') }}" + category };
-                delete existingNode.children; // Leaf node doesn't need children
-            }
-            currentLevel = existingNode.children;
-        });
-    });
-
-    // Initialize jsTree
-    $('#category-tree').jstree({
-        'core' : {
-            'data' : treeData
+    $('#category-tree').treeview({
+        data: treeData,
+        enableLinks: true,
+        showBorder: false,
+        expandIcon: 'fas fa-chevron-right',
+        collapseIcon: 'fas fa-chevron-down',
+        nodeIcon: 'fas fa-folder',
+        selectedBackColor: '#007bff',
+        selectedColor: '#fff',
+        onNodeSelected: function(event, node) {
+            window.location.href = node.href;
         }
-    });
-
-    // Handle category selection
-    $('#category-tree').on("select_node.jstree", function (e, data) {
-        const href = data.node.a_attr.href;
-        window.location.href = href;
     });
 });
 </script>

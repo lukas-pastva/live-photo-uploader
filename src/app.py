@@ -140,7 +140,34 @@ class CategoryForm(FlaskForm):
 def index():
     categories = os.listdir(app.config['UPLOAD_FOLDER'])
     form = CategoryForm()
-    return render_template('index.html', categories=categories, form=form)
+    
+    # Build tree data dynamically
+    treeData = []
+    for category in categories:
+        category_path = os.path.join(app.config['UPLOAD_FOLDER'], category)
+        if os.path.isdir(category_path):
+            subdirs = [d for d in os.listdir(category_path) if os.path.isdir(os.path.join(category_path, d))]
+            if subdirs:
+                nodes = []
+                for sub in subdirs:
+                    nodes.append({
+                        'text': sub,
+                        'href': url_for('category_view', category=sub),
+                        'selectable': True
+                    })
+                treeData.append({
+                    'text': category,
+                    'href': url_for('category_view', category=category),
+                    'selectable': True,
+                    'nodes': nodes
+                })
+            else:
+                treeData.append({
+                    'text': category,
+                    'href': url_for('category_view', category=category),
+                    'selectable': True
+                })
+    return render_template('index.html', categories=categories, form=form, treeData=treeData)
 
 @app.route('/category/<category>')
 def category_view(category):
