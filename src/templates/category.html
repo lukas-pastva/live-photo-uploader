@@ -126,24 +126,51 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize PhotoSwipe
     const galleryElements = document.querySelectorAll('[data-pswp-src]');
     const pswpElement = document.querySelectorAll('.pswp')[0];
+    const uiElement = PhotoSwipeUI_Default; // PhotoSwipe 4.x UI
 
-    const items = Array.from(galleryElements).map(el => ({
-        src: el.getAttribute('href'),
-        msrc: el.querySelector('img').getAttribute('src'),
-        title: el.getAttribute('data-title'),
-        w: 0, // width will be set dynamically
-        h: 0  // height will be set dynamically
-    }));
+    const items = [];
 
-    galleryElements.forEach((element, index) => {
-        element.addEventListener('click', function(e) {
-            e.preventDefault();
-            const gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
-                index: index,
-                bgOpacity: 0.8,
-                showHideOpacity: true
+    // Function to load image dimensions
+    function loadImage(item, index) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = item.src;
+            img.onload = function() {
+                item.w = img.naturalWidth;
+                item.h = img.naturalHeight;
+                resolve();
+            };
+            img.onerror = function() {
+                // Fallback dimensions
+                item.w = 1024;
+                item.h = 768;
+                resolve();
+            };
+        });
+    }
+
+    galleryElements.forEach(el => {
+        items.push({
+            src: el.getAttribute('href'),
+            msrc: el.querySelector('img').getAttribute('src'),
+            title: el.getAttribute('data-title'),
+            w: 0, // to be set
+            h: 0  // to be set
+        });
+    });
+
+    // Preload all image dimensions
+    Promise.all(items.map(loadImage)).then(() => {
+        galleryElements.forEach((el, index) => {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                const gallery = new PhotoSwipe(pswpElement, uiElement, items, {
+                    index: index,
+                    bgOpacity: 0.8,
+                    showHideOpacity: true
+                });
+                gallery.init();
             });
-            gallery.init();
         });
     });
 
