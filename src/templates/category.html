@@ -44,7 +44,7 @@
                 <div class="btn-group btn-group-sm" role="group" aria-label="Download Buttons">
                     {% if file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                         <!-- For videos, only source download -->
-                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Download Video">download</a>
+                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Download Video">L</a>
                     {% else %}
                         <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
                         <a href="{{ url_for('download_single', category=category, size='largest', filename=file.filename) }}" class="btn btn-info btn-sm" download title="Largest (M)">M</a>

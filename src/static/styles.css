@@ -29,6 +29,7 @@
 /* Adjust list-group-item padding for better alignment */
 .list-group-item {
     padding: 0.75rem 1.25rem;
+    border: 1px solid rgba(0, 0, 0, .125);
 }
 
 /* Hover effect for category buttons */
@@ -190,4 +191,14 @@ dialog::backdrop {
         font-size: 1rem;
         margin-right: 10px;
     }
+}
+
+.treeview span.icon {
+    margin-right: 10px;
+}
+
+.list-group {
+    border-color: #cacaca;
+    border-width: 1px;
+    border-style: solid;
 }
