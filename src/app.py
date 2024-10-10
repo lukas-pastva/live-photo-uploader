@@ -54,12 +54,7 @@ def process_file(filepath, category):
         return
 
     if ext in video_extensions:
-        # For videos, copy to 'source' directory without resizing
-        source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
-        os.makedirs(source_dir, exist_ok=True)
-        save_path = os.path.join(source_dir, filename)
-        if not os.path.exists(save_path):
-            shutil.copyfile(filepath, save_path)
+        # For videos, already saved to 'source' in upload_file
         return
 
     # Open the image file
@@ -175,28 +170,31 @@ def index():
 
 @app.route('/category/<category>')
 def category_view(category):
-    # Get filenames from the 'largest' directory for images and 'source' for videos
+    # Define directories
     largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
     source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+    
     files = []
-
-    # Define video extensions
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'}
     video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
 
+    # Fetch images from 'largest' directory
     if os.path.exists(largest_dir):
         image_files = os.listdir(largest_dir)
         for file in image_files:
             name, ext = os.path.splitext(file)
             ext = ext.lower()
-            files.append({'name': name, 'ext': ext, 'filename': file})
+            if ext in image_extensions:
+                files.append({'name': name, 'ext': ext, 'filename': file})
 
+    # Fetch videos from 'source' directory
     if os.path.exists(source_dir):
-        # Filter only video files to prevent duplication of images
-        video_files = [f for f in os.listdir(source_dir) if os.path.splitext(f)[1].lower() in video_extensions]
+        video_files = os.listdir(source_dir)
         for file in video_files:
             name, ext = os.path.splitext(file)
             ext = ext.lower()
-            files.append({'name': name, 'ext': ext, 'filename': file})
+            if ext in video_extensions:
+                files.append({'name': name, 'ext': ext, 'filename': file})
 
     return render_template('category.html', category=category, files=files)
 
@@ -248,7 +246,7 @@ def upload_file(category):
             if file and allowed_file(file.filename):
                 # Use secure filename
                 filename = secure_filename(file.filename)
-                # Save the original file to 'source' if it's a video, else to 'source' first
+                # Determine destination directory based on file type
                 ext = os.path.splitext(filename)[1].lower()
                 if ext in {'.mp4', '.mov', '.avi', '.mkv'}:
                     dest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
