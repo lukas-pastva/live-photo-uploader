@@ -54,10 +54,10 @@ def process_file(filepath, category):
         return
 
     if ext in video_extensions:
-        # For videos, copy to 'largest' directory without resizing
-        largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
-        os.makedirs(largest_dir, exist_ok=True)
-        save_path = os.path.join(largest_dir, filename)
+        # For videos, copy to 'source' directory without resizing
+        source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+        os.makedirs(source_dir, exist_ok=True)
+        save_path = os.path.join(source_dir, filename)
         if not os.path.exists(save_path):
             shutil.copyfile(filepath, save_path)
         return
@@ -132,6 +132,30 @@ def process_file(filepath, category):
             save_path = os.path.join(save_dir, f'{name}.jpeg')
             img_copy.save(save_path, 'JPEG', quality=THUMBNAIL_QUALITY)
 
+def build_tree_data(categories):
+    tree = {}
+    for category in categories:
+        parts = category.split('-')
+        current_level = tree
+        for part in parts:
+            if part not in current_level:
+                current_level[part] = {}
+            current_level = current_level[part]
+    def build_nodes(current_dict, parent_path=''):
+        nodes = []
+        for name, subtree in sorted(current_dict.items()):
+            full_path = f"{parent_path}-{name}" if parent_path else name
+            node = {
+                'text': name,
+                'href': url_for('category_view', category=full_path),
+                'selectable': True
+            }
+            if subtree:
+                node['nodes'] = build_nodes(subtree, full_path)
+            nodes.append(node)
+        return nodes
+    return build_nodes(tree)
+
 class CategoryForm(FlaskForm):
     category_name = StringField('Category Name', validators=[DataRequired()])
     submit = SubmitField('Create Category')
@@ -141,48 +165,33 @@ def index():
     categories = os.listdir(app.config['UPLOAD_FOLDER'])
     form = CategoryForm()
     
-    # Build tree data dynamically
-    treeData = []
-    for category in categories:
-        category_path = os.path.join(app.config['UPLOAD_FOLDER'], category)
-        if os.path.isdir(category_path):
-            subdirs = [d for d in os.listdir(category_path) if os.path.isdir(os.path.join(category_path, d))]
-            if subdirs:
-                nodes = []
-                for sub in subdirs:
-                    nodes.append({
-                        'text': sub,
-                        'href': url_for('category_view', category=sub),
-                        'selectable': True
-                    })
-                treeData.append({
-                    'text': category,
-                    'href': url_for('category_view', category=category),
-                    'selectable': True,
-                    'nodes': nodes
-                })
-            else:
-                treeData.append({
-                    'text': category,
-                    'href': url_for('category_view', category=category),
-                    'selectable': True
-                })
+    # Filter only directories
+    categories = [c for c in categories if os.path.isdir(os.path.join(app.config['UPLOAD_FOLDER'], c))]
+    
+    # Build tree data based on category names with "-" as hierarchy
+    treeData = build_tree_data(categories)
+    
     return render_template('index.html', categories=categories, form=form, treeData=treeData)
 
 @app.route('/category/<category>')
 def category_view(category):
-    # Get filenames from the 'largest' directory
+    # Get filenames from the 'largest' directory for images and 'source' for videos
     largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+    source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+    files = []
     if os.path.exists(largest_dir):
-        files = os.listdir(largest_dir)
-        file_info_list = []
-        for file in files:
+        image_files = os.listdir(largest_dir)
+        for file in image_files:
             name, ext = os.path.splitext(file)
             ext = ext.lower()
-            file_info_list.append({'name': name, 'ext': ext, 'filename': file})
-    else:
-        file_info_list = []
-    return render_template('category.html', category=category, files=file_info_list)
+            files.append({'name': name, 'ext': ext, 'filename': file})
+    if os.path.exists(source_dir):
+        video_files = os.listdir(source_dir)
+        for file in video_files:
+            name, ext = os.path.splitext(file)
+            ext = ext.lower()
+            files.append({'name': name, 'ext': ext, 'filename': file})
+    return render_template('category.html', category=category, files=files)
 
 @app.route('/category/create', methods=['POST'])
 def create_category():
@@ -216,10 +225,14 @@ def upload_file(category):
             if file and allowed_file(file.filename):
                 # Use secure filename
                 filename = secure_filename(file.filename)
-                # Save the original file to 'source'
-                source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
-                os.makedirs(source_dir, exist_ok=True)
-                filepath = os.path.join(source_dir, filename)
+                # Save the original file to 'source' if it's a video, else to 'source' first
+                ext = os.path.splitext(filename)[1].lower()
+                if ext in {'.mp4', '.mov', '.avi', '.mkv'}:
+                    dest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+                else:
+                    dest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+                os.makedirs(dest_dir, exist_ok=True)
+                filepath = os.path.join(dest_dir, filename)
                 file.save(filepath)
 
                 # Process the file
