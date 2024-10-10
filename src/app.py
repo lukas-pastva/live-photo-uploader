@@ -179,18 +179,25 @@ def category_view(category):
     largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
     source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
     files = []
+
+    # Define video extensions
+    video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
+
     if os.path.exists(largest_dir):
         image_files = os.listdir(largest_dir)
         for file in image_files:
             name, ext = os.path.splitext(file)
             ext = ext.lower()
             files.append({'name': name, 'ext': ext, 'filename': file})
+
     if os.path.exists(source_dir):
-        video_files = os.listdir(source_dir)
+        # Filter only video files to prevent duplication of images
+        video_files = [f for f in os.listdir(source_dir) if os.path.splitext(f)[1].lower() in video_extensions]
         for file in video_files:
             name, ext = os.path.splitext(file)
             ext = ext.lower()
             files.append({'name': name, 'ext': ext, 'filename': file})
+
     return render_template('category.html', category=category, files=files)
 
 @app.route('/category/create', methods=['POST'])
