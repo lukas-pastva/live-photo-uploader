@@ -170,19 +170,22 @@ dialog::backdrop {
     margin-right: 15px; /* Increased space between icon and text */
 }
 
-/* Style the delete button/icon */
-.delete-category-btn {
-    cursor: pointer;
-    color: red;
-    margin-left: 10px;
-    /* Optional: Adjust size */
-    font-size: 1rem;
-}
-
 /* Optional: Enhance the appearance of the tree nodes */
 #category-tree .treeview-item:hover {
     background-color: #e9ecef; /* Light hover effect */
     border-radius: 0.25rem;
+}
+
+/* Style the delete button/icon within category view */
+.btn-danger.btn-lg {
+    /* Ensure the delete button aligns with the upload button */
+    vertical-align: middle;
+}
+
+/* Ensure the delete form is displayed inline with proper spacing */
+.delete-form {
+    display: inline-block;
+    margin-left: 10px;
 }
 
 /* Ensure the tree view is responsive */

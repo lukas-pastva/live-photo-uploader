@@ -22,11 +22,10 @@
     </div>
     <!-- Removed the separate list of categories -->
 </div>
-
 <!-- Include jQuery first -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
-<!-- Initialize Bootstrap Treeview and Handle Delete Actions -->
+<!-- Initialize Bootstrap Treeview -->
 <script>
 $(document).ready(function(){
     // Use the dynamic treeData passed from Flask
@@ -34,7 +33,7 @@ $(document).ready(function(){
     
     $('#category-tree').treeview({
         data: treeData,
-        enableHtml: true, // Enable HTML content in node text
+        enableHtml: true, // Enable HTML content in node text if needed
         enableLinks: true,
         showBorder: false,
         expandIcon: 'fas fa-chevron-right',
@@ -44,36 +43,8 @@ $(document).ready(function(){
         selectedColor: '#fff',
         levels: 3, // Adjust based on maximum depth
         onNodeSelected: function(event, node) {
-            // Prevent navigation if the delete button was clicked
-            if (!$(event.target).hasClass('delete-category-btn')) {
-                window.location.href = node.href;
-            }
-        }
-    });
-    
-    // Handle delete button clicks using event delegation
-    $('#category-tree').on('click', '.delete-category-btn', function(e){
-        e.stopPropagation(); // Prevent the node selection event
-        var category = $(this).data('category');
-        if(confirm("Are you sure you want to delete the category '" + category + "'? This action cannot be undone.")){
-            var deleteUrl = "{{ url_for('delete_category', category='') }}" + encodeURIComponent(category);
-            $.ajax({
-                url: deleteUrl,
-                type: 'POST',
-                data: {},
-                success: function(response){
-                    if(response.status === 'success'){
-                        alert(response.message);
-                        // Remove the node from the tree without refreshing
-                        location.reload(); // Alternatively, implement node removal dynamically
-                    } else {
-                        alert("Failed to delete category: " + response.message);
-                    }
-                },
-                error: function(xhr, status, error){
-                    alert("An error occurred while deleting the category.");
-                }
-            });
+            // Navigate to the category view unless the delete button was clicked
+            window.location.href = node.href;
         }
     });
 });

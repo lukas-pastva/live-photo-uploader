@@ -145,9 +145,8 @@ def build_tree_data(categories):
         nodes = []
         for name, subtree in sorted(current_dict.items()):
             full_path = f"{parent_path}-{name}" if parent_path else name
-            # Include delete icon with data-category attribute
             node = {
-                'text': f"{name} <i class='fas fa-trash delete-category-btn' data-category='{full_path}'></i>",
+                'text': name,  # Removed the delete icon
                 'href': url_for('category_view', category=full_path),
                 'selectable': True
             }
@@ -210,8 +209,24 @@ def create_category():
 def delete_category(category):
     category_path = os.path.join(app.config['UPLOAD_FOLDER'], category)
     if os.path.exists(category_path):
-        shutil.rmtree(category_path)
-    return redirect(url_for('index'))
+        try:
+            shutil.rmtree(category_path)
+            # If the request is AJAX, return JSON
+            if request.is_json:
+                return jsonify({'status': 'success', 'message': f"Category '{category}' has been deleted successfully."}), 200
+            else:
+                return redirect(url_for('index'))
+        except Exception as e:
+            if request.is_json:
+                return jsonify({'status': 'fail', 'message': f"Error deleting category: {str(e)}"}), 500
+            else:
+                # Handle non-AJAX deletion if necessary
+                return redirect(url_for('index'))
+    else:
+        if request.is_json:
+            return jsonify({'status': 'fail', 'message': 'Category does not exist.'}), 404
+        else:
+            return redirect(url_for('index'))
 
 @app.route('/upload/<category>', methods=['GET', 'POST'])
 def upload_file(category):

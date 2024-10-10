@@ -2,7 +2,15 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Category: {{ category }}</h1>
-<a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg btn-block mb-3">Upload Photo/Video</a>
+<div class="mb-3">
+    <!-- Upload Button -->
+    <a href="{{ url_for('upload_file', category=category) }}" class="btn btn-success btn-lg">Upload</a>
+    
+    <!-- Delete Button -->
+    <form action="{{ url_for('delete_category', category=category) }}" method="post" class="d-inline-block ml-2" onsubmit="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">
+        <button type="submit" class="btn btn-danger btn-lg">Delete Category</button>
+    </form>
+</div>
 
 <!-- Download All Files Buttons -->
 <div class="btn-group btn-group-sm btn-block mb-3" role="group" aria-label="Download All Sizes">
@@ -210,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    alert(data.message);
                     // Remove the card from the DOM
                     const card = currentForm.closest('.card').parentElement;
                     card.remove();
