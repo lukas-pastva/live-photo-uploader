@@ -7,27 +7,53 @@
         <button type="submit" class="btn btn-primary btn-lg btn-block">Create Category</button>
     </div>
 </form>
-<ul class="list-group">
-    {% for category in categories %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        <!-- Category Button -->
-        <a href="{{ url_for('category_view', category=category) }}" class="btn btn-outline-secondary btn-block text-left">
-            {{ category }}
-        </a>
-        <!-- Delete Button -->
-        <form action="{{ url_for('delete_category', category=category) }}" method="post" onsubmit="return confirmDelete('{{ category }}');" class="mb-0 ml-2">
-            <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
-    </li>
-    {% else %}
-    <li class="list-group-item">No categories available.</li>
-    {% endfor %}
-</ul>
 
-<!-- Confirmation Dialog Script -->
+<!-- Tree Container -->
+<div id="categoryTree"></div>
+
+<!-- Initialize jsTree -->
 <script>
-function confirmDelete(categoryName) {
-    return confirm("This will delete all photos and videos in the category '" + categoryName + "'. Are you sure?");
-}
+$(function() {
+    // Convert flat category list to hierarchical data
+    const categories = {{ categories | tojson }};
+    const treeData = [];
+
+    categories.forEach(category => {
+        const parts = category.split('-');
+        let currentLevel = treeData;
+
+        parts.forEach((part, index) => {
+            let existingNode = currentLevel.find(node => node.text === part);
+            if (!existingNode) {
+                existingNode = { text: part, children: [] };
+                currentLevel.push(existingNode);
+            }
+            if (index === parts.length - 1) {
+                // Add additional data like href for leaf nodes
+                existingNode.a_attr = { href: "{{ url_for('category_view', category='') }}" + category };
+                existingNode.icon = "jstree-file"; // Optional: Change icon for leaf nodes
+            }
+            currentLevel = existingNode.children;
+        });
+    });
+
+    // Initialize jsTree with the hierarchical data
+    $('#categoryTree').jstree({
+        'core' : {
+            'data' : treeData,
+            'themes': {
+                'responsive': false
+            }
+        }
+    });
+
+    // Handle click event on tree nodes
+    $('#categoryTree').on("select_node.jstree", function (e, data) {
+        const href = data.node.a_attr.href;
+        if (href) {
+            window.location.href = href;
+        }
+    });
+});
 </script>
 {% endblock %}

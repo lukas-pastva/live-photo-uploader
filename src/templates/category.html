@@ -8,18 +8,22 @@
     <a href="{{ url_for('download_category', category=category, size='source') }}" class="btn btn-primary" title="Download All Original">↓ original</a>
     <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info" title="Download All Large">↓ large</a>
     <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary" title="Download All Medium">↓ medium</a>
+    <!-- Download All Videos Button -->
+    <a href="{{ url_for('download_videos', category=category) }}" class="btn btn-warning" title="Download All Videos">↓ All Videos</a>
 </div>
 
 <div class="row">
     {% for file in files %}
-    <div class="col-6 col-sm-4 col-md-3">
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
         <div class="card mb-3">
             {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
-                <!-- Display image thumbnail -->
-                <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + file.name + '.jpeg') }}" class="card-img-top" alt="{{ file.filename }}">
+                <!-- Wrap image with Lightbox link -->
+                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" data-lightbox="gallery" data-title="{{ file.filename }}">
+                    <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + file.name + '.jpeg') }}" class="card-img-top" alt="{{ file.filename }}">
+                </a>
             {% elif file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                 <!-- Display video -->
-                <video class="card-img-top" controls>
+                <video class="card-img-top" controls preload="metadata">
                     <source src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" type="video/{{ file.ext[1:] }}">
                     Your browser does not support the video tag.
                 </video>
@@ -31,18 +35,17 @@
             {% endif %}
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Download Buttons">
-                    <!-- Individual download links with abbreviations -->
-                    <a href="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
-                    {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
-                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm" download title="Largest (M)">M</a>
-                        <a href="{{ url_for('uploaded_file', filename=category + '/medium/' + file.name + '.jpeg') }}" class="btn btn-secondary btn-sm" download title="Medium (S)">S</a>
+                    {% if file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
+                        <!-- For videos, only source download -->
+                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Download Video">↓</a>
                     {% else %}
-                        <!-- For videos, only Source and Largest are available -->
-                        <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" class="btn btn-info btn-sm" download title="Video (M)">M</a>
+                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
+                        <a href="{{ url_for('download_single', category=category, size='largest', filename=file.filename) }}" class="btn btn-info btn-sm" download title="Largest (M)">M</a>
+                        <a href="{{ url_for('download_single', category=category, size='medium', filename=file.filename) }}" class="btn btn-secondary btn-sm" download title="Medium (S)">S</a>
                     {% endif %}
                 </div>
                 <!-- Delete Button -->
-                <form action="{{ url_for('delete_photo', category=category, filename=file.filename) }}" method="post" class="mb-0">
+                <form action="{{ url_for('delete_photo', category=category, filename=file.filename) }}" method="post" class="mb-0 delete-form" data-filename="{{ file.filename }}">
                     <button type="submit" class="btn btn-danger btn-sm" title="Delete">X</button>
                 </form>
             </div>
@@ -52,46 +55,52 @@
     <p>No files in this category.</p>
     {% endfor %}
 </div>
-{% endblock %}
 
 <!-- Confirmation Dialog and AJAX Deletion Script -->
 <script>
-function confirmDelete(filename) {
-    return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to confirm deletion
+    function confirmDelete(filename) {
+        return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
+    }
 
-// Handle deletion without page reload
-document.querySelectorAll('form[action^="/delete_photo"]').forEach(form => {
-    form.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the form from submitting traditionally
-        const filename = this.action.split('/').pop(); // Extract filename from URL
-        if (!confirmDelete(filename)) {
-            return;
-        }
-        const url = this.action;
+    // Handle deletion without page reload
+    document.querySelectorAll('.delete-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting traditionally
+            const filename = this.dataset.filename;
 
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                // Remove the card from the DOM
-                const card = this.closest('.card').parentElement;
-                card.remove();
-            } else {
-                alert(data.message);
+            if (!confirmDelete(filename)) {
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while deleting the photo.');
+
+            const url = this.action;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest' // To identify AJAX request
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    // Remove the card from the DOM
+                    const card = this.closest('.card').parentElement;
+                    card.remove();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the photo.');
+            });
         });
     });
 });
 </script>
+{% endblock %}

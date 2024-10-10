@@ -47,13 +47,12 @@ def process_file(filepath, category):
         return
 
     if ext in video_extensions:
-        # For videos, no processing is needed
-        # Copy the video file to the 'largest' directory to keep consistency
-        save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, filename)
-        shutil.copyfile(filepath, save_path)
-        # No further processing needed
+        # For videos, copy to 'source' and 'largest' directories without resizing
+        for size in ['source', 'largest']:
+            save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, filename)
+            shutil.copyfile(filepath, save_path)
         return
 
     # Open the image file
@@ -192,7 +191,7 @@ def upload_file(category):
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, conditional=True)
 
 @app.route('/download_category/<category>')
 def download_category(category):
@@ -220,7 +219,6 @@ def download_category(category):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for file_path, filename in zip(image_paths, image_filenames):
-            # Add each file to the ZIP archive
             zip_file.write(file_path, arcname=filename)
 
     # Set the pointer to the beginning of the stream
@@ -232,6 +230,38 @@ def download_category(category):
         mimetype='application/zip',
         as_attachment=True,
         download_name=f'{category}_{size}_files.zip'
+    )
+
+@app.route('/download_videos/<category>')
+def download_videos(category):
+    video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
+    # Path to the 'source' directory for videos
+    source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+    if not os.path.exists(source_dir):
+        return jsonify({'status': 'fail', 'message': 'Category not found.'}), 404
+
+    # Filter video files
+    video_filenames = [f for f in os.listdir(source_dir) if os.path.splitext(f)[1].lower() in video_extensions]
+    video_paths = [os.path.join(source_dir, f) for f in video_filenames]
+
+    if not video_filenames:
+        return jsonify({'status': 'fail', 'message': 'No videos to download.'}), 404
+
+    # Create a ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_path, filename in zip(video_paths, video_filenames):
+            zip_file.write(file_path, arcname=filename)
+
+    # Set the pointer to the beginning of the stream
+    zip_buffer.seek(0)
+
+    # Send the ZIP file as a response
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'{category}_videos.zip'
     )
 
 @app.route('/delete_photo/<category>/<filename>', methods=['POST'])
@@ -251,7 +281,7 @@ def delete_photo(category, filename):
                 messages.append(f'Error deleting {size} version: {str(e)}')
         else:
             # File does not exist
-            pass  # You can choose to add a message if desired
+            pass  # Optionally, handle non-existent files
 
     if success:
         return jsonify({'status': 'success', 'message': f"'{filename}' has been deleted successfully."}), 200
@@ -261,7 +291,7 @@ def delete_photo(category, filename):
 @app.route('/download_single/<category>/<size>/<filename>')
 def download_single(category, size, filename):
     # Validate size
-    valid_sizes = ['source', 'largest', 'medium', 'thumbnail']
+    valid_sizes = ['source', 'largest', 'medium']
     if size not in valid_sizes:
         abort(404)
 

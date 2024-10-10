@@ -1,3 +1,5 @@
+/* static/styles.css */
+
 /* Custom styling for the HOME button in the navbar */
 .navbar-brand {
     font-size: 1.5rem;
@@ -51,13 +53,15 @@ video.card-img-top {
 .card {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border: none;
+    margin: 0.25rem; /* Reduced margin */
 }
 
 .card-img-top {
     border-top-left-radius: 0.25rem;
     border-top-right-radius: 0.25rem;
+    height: 200px;
+    object-fit: cover;
 }
-/* static/styles.css */
 
 /* Ensure all buttons in the card body have consistent width */
 .card-body .btn {
@@ -93,8 +97,18 @@ video.card-img-top {
     opacity: 0.8;
 }
 
-/* Optional: Adjust video height for consistency */
-video.card-img-top {
-    height: 200px;
-    object-fit: cover;
+/* Adjust Bootstrap grid gutters */
+.row {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+}
+
+.row > [class*='col-'] {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+/* Optional: Adjust card body padding */
+.card-body {
+    padding: 0.5rem;
 }
