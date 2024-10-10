@@ -145,8 +145,9 @@ def build_tree_data(categories):
         nodes = []
         for name, subtree in sorted(current_dict.items()):
             full_path = f"{parent_path}-{name}" if parent_path else name
+            # Include delete icon with data-category attribute
             node = {
-                'text': name,
+                'text': f"{name} <i class='fas fa-trash delete-category-btn' data-category='{full_path}'></i>",
                 'href': url_for('category_view', category=full_path),
                 'selectable': True
             }

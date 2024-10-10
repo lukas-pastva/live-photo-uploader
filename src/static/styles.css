@@ -170,6 +170,15 @@ dialog::backdrop {
     margin-right: 15px; /* Increased space between icon and text */
 }
 
+/* Style the delete button/icon */
+.delete-category-btn {
+    cursor: pointer;
+    color: red;
+    margin-left: 10px;
+    /* Optional: Adjust size */
+    font-size: 1rem;
+}
+
 /* Optional: Enhance the appearance of the tree nodes */
 #category-tree .treeview-item:hover {
     background-color: #e9ecef; /* Light hover effect */

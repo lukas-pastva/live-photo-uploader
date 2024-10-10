@@ -20,31 +20,13 @@
             </div>
         </form>
     </div>
-    <!-- Remove the separate list of categories by omitting this column -->
-    <!--
-    <div class="col-md-8">
-        {% if categories %}
-            <ul class="list-group">
-                {% for category in categories %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('category_view', category=category) }}">{{ category }}</a>
-                        <form action="{{ url_for('delete_category', category=category) }}" method="post" class="float-right">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No categories available.</p>
-        {% endif %}
-    </div>
-    -->
+    <!-- Removed the separate list of categories -->
 </div>
 
 <!-- Include jQuery first -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
-<!-- Initialize Bootstrap Treeview -->
+<!-- Initialize Bootstrap Treeview and Handle Delete Actions -->
 <script>
 $(document).ready(function(){
     // Use the dynamic treeData passed from Flask
@@ -52,6 +34,7 @@ $(document).ready(function(){
     
     $('#category-tree').treeview({
         data: treeData,
+        enableHtml: true, // Enable HTML content in node text
         enableLinks: true,
         showBorder: false,
         expandIcon: 'fas fa-chevron-right',
@@ -61,7 +44,36 @@ $(document).ready(function(){
         selectedColor: '#fff',
         levels: 3, // Adjust based on maximum depth
         onNodeSelected: function(event, node) {
-            window.location.href = node.href;
+            // Prevent navigation if the delete button was clicked
+            if (!$(event.target).hasClass('delete-category-btn')) {
+                window.location.href = node.href;
+            }
+        }
+    });
+    
+    // Handle delete button clicks using event delegation
+    $('#category-tree').on('click', '.delete-category-btn', function(e){
+        e.stopPropagation(); // Prevent the node selection event
+        var category = $(this).data('category');
+        if(confirm("Are you sure you want to delete the category '" + category + "'? This action cannot be undone.")){
+            var deleteUrl = "{{ url_for('delete_category', category='') }}" + encodeURIComponent(category);
+            $.ajax({
+                url: deleteUrl,
+                type: 'POST',
+                data: {},
+                success: function(response){
+                    if(response.status === 'success'){
+                        alert(response.message);
+                        // Remove the node from the tree without refreshing
+                        location.reload(); // Alternatively, implement node removal dynamically
+                    } else {
+                        alert("Failed to delete category: " + response.message);
+                    }
+                },
+                error: function(xhr, status, error){
+                    alert("An error occurred while deleting the category.");
+                }
+            });
         }
     });
 });
