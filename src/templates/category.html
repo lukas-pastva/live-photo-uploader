@@ -25,7 +25,7 @@
             {% elif file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                 <!-- Display video -->
                 <video class="card-img-top" controls preload="metadata">
-                    <source src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" type="video/{{ file.ext[1:].lower() }}">
+                    <source src="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" type="video/{{ file.ext[1:].lower() }}">
                     Your browser does not support the video tag.
                 </video>
             {% else %}
@@ -91,11 +91,9 @@
                 </div>
             </div>
             <!-- Navigation -->
-            <div class="pswp__ui__direction--ltr">
-                <div class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
-                </div>
-                <div class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
-                </div>
+            <div class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </div>
+            <div class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
             </div>
             <!-- Caption -->
             <div class="pswp__caption">

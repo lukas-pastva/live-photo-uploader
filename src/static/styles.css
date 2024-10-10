@@ -43,13 +43,13 @@
     border-color: #bd2130;
 }
 
-/* Optional: Style the video player for consistency */
+/* Style the video player for consistency */
 video.card-img-top {
     height: 200px;
     object-fit: cover;
 }
 
-/* Optional: Adjust media card shadow and border */
+/* Adjust media card shadow and border */
 .card {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border: none;
@@ -92,7 +92,7 @@ video.card-img-top {
     margin-right: 0;
 }
 
-/* Optional: Add hover effects for better UX */
+/* Add hover effects for better UX */
 .btn-group.btn-group-sm.btn-block .btn:hover {
     opacity: 0.8;
 }
@@ -108,7 +108,7 @@ video.card-img-top {
     padding-right: 0.1rem;
 }
 
-/* Optional: Adjust card body padding */
+/* Adjust card body padding */
 .card-body {
     padding: 0.25rem; /* Reduced padding */
 }

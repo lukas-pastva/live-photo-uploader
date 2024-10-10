@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Upload to Category: {{ category }}</h1>
 <form id="uploadForm" action="{{ url_for('upload_file', category=category) }}" method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
     <div class="form-group">
         <label for="photos">Select Photos and Videos</label>
         <input type="file" name="photos[]" class="form-control-file" id="photos" accept="image/*,video/*" multiple required>

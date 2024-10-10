@@ -54,11 +54,11 @@ def process_file(filepath, category):
         return
 
     if ext in video_extensions:
-        # For videos, copy to 'source' and 'largest' directories without resizing
-        for size in ['source', 'largest']:
-            save_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, size)
-            os.makedirs(save_dir, exist_ok=True)
-            save_path = os.path.join(save_dir, filename)
+        # For videos, copy to 'largest' directory without resizing
+        largest_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'largest')
+        os.makedirs(largest_dir, exist_ok=True)
+        save_path = os.path.join(largest_dir, filename)
+        if not os.path.exists(save_path):
             shutil.copyfile(filepath, save_path)
         return
 
@@ -189,10 +189,10 @@ def upload_file(category):
             if file and allowed_file(file.filename):
                 # Use secure filename
                 filename = secure_filename(file.filename)
-                # Save the original file
-                category_path = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
-                os.makedirs(category_path, exist_ok=True)
-                filepath = os.path.join(category_path, filename)
+                # Save the original file to 'source'
+                source_dir = os.path.join(app.config['UPLOAD_FOLDER'], category, 'source')
+                os.makedirs(source_dir, exist_ok=True)
+                filepath = os.path.join(source_dir, filename)
                 file.save(filepath)
 
                 # Process the file
