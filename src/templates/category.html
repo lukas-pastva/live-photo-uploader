@@ -1,3 +1,4 @@
+<!-- templates/category.html -->
 {% extends 'base.html' %}
 {% block content %}
 <h1>Category: {{ category }}</h1>
@@ -17,14 +18,14 @@
     <div class="col-6 col-sm-4 col-md-3 col-lg-2">
         <div class="card mb-3">
             {% if file.ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.heic'] %}
-                <!-- Wrap image with Lightbox link -->
-                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" data-lightbox="gallery" data-title="{{ file.filename }}">
-                    <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + file.name + '.jpeg') }}" class="card-img-top" alt="{{ file.filename }}">
+                <!-- Wrap image with PhotoSwipe link -->
+                <a href="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" data-pswp-src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" data-title="{{ file.filename }}">
+                    <img src="{{ url_for('uploaded_file', filename=category + '/thumbnail/' + file.name + '.jpeg') }}" class="card-img-top" alt="{{ file.filename }}" loading="lazy">
                 </a>
             {% elif file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                 <!-- Display video -->
                 <video class="card-img-top" controls preload="metadata">
-                    <source src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" type="video/{{ file.ext[1:] }}">
+                    <source src="{{ url_for('uploaded_file', filename=category + '/largest/' + file.filename) }}" type="video/{{ file.ext[1:].lower() }}">
                     Your browser does not support the video tag.
                 </video>
             {% else %}
@@ -56,50 +57,138 @@
     {% endfor %}
 </div>
 
+<!-- PhotoSwipe Container -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides -->
+        <div class="pswp__container">
+            <!-- Individual slides -->
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default UI -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!-- Close button -->
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <!-- Share button -->
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <!-- Fullscreen button -->
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <!-- Zoom button -->
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Navigation -->
+            <div class="pswp__ui__direction--ltr">
+                <div class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+                </div>
+                <div class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+                </div>
+            </div>
+            <!-- Caption -->
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<dialog id="delete-confirmation-dialog">
+    <form method="dialog">
+        <p id="dialog-text">Are you sure you want to delete this item?</p>
+        <menu>
+            <button value="cancel">Cancel</button>
+            <button id="confirm-delete" value="default">Delete</button>
+        </menu>
+    </form>
+</dialog>
+
 <!-- Confirmation Dialog and AJAX Deletion Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to confirm deletion
-    function confirmDelete(filename) {
-        return confirm("Are you sure you want to delete '" + filename + "'? This action cannot be undone.");
-    }
+    const deleteForms = document.querySelectorAll('.delete-form');
+    const dialog = document.getElementById('delete-confirmation-dialog');
+    const dialogText = document.getElementById('dialog-text');
+    const confirmDeleteButton = document.getElementById('confirm-delete');
+    let currentForm = null;
 
-    // Handle deletion without page reload
-    document.querySelectorAll('.delete-form').forEach(form => {
+    // Initialize PhotoSwipe
+    const galleryElements = document.querySelectorAll('[data-pswp-src]');
+
+    galleryElements.forEach(element => {
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
+            const items = Array.from(galleryElements).map(el => ({
+                src: el.getAttribute('href'),
+                msrc: el.querySelector('img').getAttribute('src'),
+                title: el.getAttribute('data-title')
+            }));
+
+            const options = {
+                index: Array.from(galleryElements).indexOf(element)
+            };
+
+            const gallery = new PhotoSwipe(options);
+            gallery.load(items);
+            gallery.show();
+        });
+    });
+
+    // Handle delete form submission
+    deleteForms.forEach(form => {
         form.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the form from submitting traditionally
+            event.preventDefault();
+            currentForm = this;
             const filename = this.dataset.filename;
+            dialogText.textContent = "Are you sure you want to delete '" + filename + "'? This action cannot be undone.";
+            dialog.showModal();
+        });
+    });
 
-            if (!confirmDelete(filename)) {
-                return;
-            }
-
-            const url = this.action;
+    // Handle confirm delete
+    confirmDeleteButton.addEventListener('click', function() {
+        if (currentForm) {
+            const filename = currentForm.dataset.filename;
+            const url = currentForm.action;
 
             fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest' // To identify AJAX request
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({})
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert(data.message);
                     // Remove the card from the DOM
-                    const card = this.closest('.card').parentElement;
+                    const card = currentForm.closest('.card').parentElement;
                     card.remove();
                 } else {
                     alert(data.message);
                 }
+                dialog.close();
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while deleting the photo.');
+                dialog.close();
             });
-        });
+        }
     });
 });
 </script>

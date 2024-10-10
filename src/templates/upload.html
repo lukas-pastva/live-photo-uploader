@@ -1,3 +1,4 @@
+<!-- templates/upload.html -->
 {% extends 'base.html' %}
 {% block content %}
 <h1>Upload to Category: {{ category }}</h1>
@@ -69,15 +70,17 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
 
     xhr.open('POST', this.action, true);
 
-    // Show the progress bar
+    // Show the progress bar and spinner
     const progressContainer = document.getElementById('uploadProgressContainer');
     const progressBar = document.getElementById('uploadProgressBar');
     const spinner = document.getElementById('uploadSpinner');
+    const uploadStatus = document.getElementById('uploadStatus');
     progressContainer.style.display = 'block';
-    spinner.style.display = 'none'; // Hide spinner initially
+    spinner.style.display = 'block'; // Show spinner
     progressBar.style.width = '0%';
     progressBar.setAttribute('aria-valuenow', 0);
     progressBar.textContent = '0%';
+    uploadStatus.innerHTML = '';
 
     // Request Wake Lock
     if ('wakeLock' in navigator) {
@@ -99,17 +102,18 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
         if (xhr.status === 200) {
             const response = JSON.parse(xhr.responseText);
             if (response.status === 'success') {
-                document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-success">' + response.message + '</div>';
+                uploadStatus.innerHTML = '<div class="alert alert-success">' + response.message + '</div>';
                 // Optionally, reset the form
                 document.getElementById('uploadForm').reset();
             } else {
-                document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">' + response.message + '</div>';
+                uploadStatus.innerHTML = '<div class="alert alert-danger">' + response.message + '</div>';
             }
         } else {
-            document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">Upload failed. Please try again.</div>';
+            uploadStatus.innerHTML = '<div class="alert alert-danger">Upload failed. Please try again.</div>';
         }
-        // Hide the progress bar after completion
+        // Hide the progress bar and spinner after completion
         progressContainer.style.display = 'none';
+        spinner.style.display = 'none';
         // Release Wake Lock
         if ('wakeLock' in navigator) {
             await releaseWakeLock();
@@ -118,19 +122,14 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
 
     // Handle errors
     xhr.addEventListener('error', async function() {
-        document.getElementById('uploadStatus').innerHTML = '<div class="alert alert-danger">An error occurred during the upload.</div>';
-        // Hide the progress bar
+        uploadStatus.innerHTML = '<div class="alert alert-danger">An error occurred during the upload.</div>';
+        // Hide the progress bar and spinner
         progressContainer.style.display = 'none';
+        spinner.style.display = 'none';
         // Release Wake Lock
         if ('wakeLock' in navigator) {
             await releaseWakeLock();
         }
-    });
-
-    // Handle upload start
-    xhr.addEventListener('loadstart', function() {
-        // Optionally, show a loading spinner
-        spinner.style.display = 'block';
     });
 
     // Send the form data

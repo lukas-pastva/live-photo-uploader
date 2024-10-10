@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, send_file, abort, jsonify
 import os
 import shutil
@@ -7,6 +8,9 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import io
 import zipfile
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
 
 app = Flask(__name__)
 
@@ -23,6 +27,9 @@ THUMBNAIL_QUALITY = 85
 
 # Set maximum upload size to 5GB (adjust as needed)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 * 1024  # 5 GB
+
+# Secret key for CSRF protection
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
 
 # Ensure the upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -125,10 +132,15 @@ def process_file(filepath, category):
             save_path = os.path.join(save_dir, f'{name}.jpeg')
             img_copy.save(save_path, 'JPEG', quality=THUMBNAIL_QUALITY)
 
+class CategoryForm(FlaskForm):
+    category_name = StringField('Category Name', validators=[DataRequired()])
+    submit = SubmitField('Create Category')
+
 @app.route('/')
 def index():
     categories = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('index.html', categories=categories)
+    form = CategoryForm()
+    return render_template('index.html', categories=categories, form=form)
 
 @app.route('/category/<category>')
 def category_view(category):
@@ -147,10 +159,9 @@ def category_view(category):
 
 @app.route('/category/create', methods=['POST'])
 def create_category():
-    category = request.form.get('category_name')
-    if category:
-        # Sanitize category name
-        category = secure_filename(category)
+    form = CategoryForm()
+    if form.validate_on_submit():
+        category = secure_filename(form.category_name.data)
         category_path = os.path.join(app.config['UPLOAD_FOLDER'], category)
         os.makedirs(category_path, exist_ok=True)
         # Create subdirectories
@@ -187,7 +198,8 @@ def upload_file(category):
                 # Process the file
                 process_file(filepath, category)
         return jsonify({'status': 'success', 'message': 'Files uploaded successfully.'}), 200
-    return render_template('upload.html', category=category)
+    form = CategoryForm()
+    return render_template('upload.html', category=category, form=form)
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
@@ -208,8 +220,9 @@ def download_category(category):
     if not os.path.exists(images_dir):
         return jsonify({'status': 'fail', 'message': 'Size not found.'}), 404
 
-    # Collect all image file paths
-    image_filenames = os.listdir(images_dir)
+    # Collect all image file paths excluding videos
+    video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
+    image_filenames = [f for f in os.listdir(images_dir) if os.path.splitext(f)[1].lower() not in video_extensions]
     image_paths = [os.path.join(images_dir, filename) for filename in image_filenames]
 
     if not image_filenames:
