@@ -10,10 +10,16 @@
     <a href="{{ url_for('download_category', category=category, size='largest') }}" class="btn btn-info" title="Download All Large">↓ large</a>
     <a href="{{ url_for('download_category', category=category, size='medium') }}" class="btn btn-secondary" title="Download All Medium">↓ medium</a>
     <!-- Download All Videos Button -->
-    <a href="{{ url_for('download_videos', category=category) }}" class="btn btn-warning" title="Download All Videos">↓ All Videos</a>
+    <a href="{{ url_for('download_videos', category=category) }}" class="btn btn-warning" title="Download Videos">↓ videos</a>
 </div>
 
 <div class="row">
+    {% set mime_types = {
+        '.mp4': 'video/mp4',
+        '.mov': 'video/quicktime',
+        '.avi': 'video/x-msvideo',
+        '.mkv': 'video/x-matroska'
+    } %}
     {% for file in files %}
     <div class="col-6 col-sm-4 col-md-3 col-lg-2">
         <div class="card mb-3">
@@ -25,7 +31,7 @@
             {% elif file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                 <!-- Display video -->
                 <video class="card-img-top" controls preload="metadata">
-                    <source src="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" type="video/{{ file.ext[1:].lower() }}">
+                    <source src="{{ url_for('uploaded_file', filename=category + '/source/' + file.filename) }}" type="{{ mime_types.get(file.ext, 'video/mp4') }}">
                     Your browser does not support the video tag.
                 </video>
             {% else %}
@@ -38,7 +44,7 @@
                 <div class="btn-group btn-group-sm" role="group" aria-label="Download Buttons">
                     {% if file.ext in ['.mp4', '.mov', '.avi', '.mkv'] %}
                         <!-- For videos, only source download -->
-                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Download Video">↓</a>
+                        <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Download Video">Videos</a>
                     {% else %}
                         <a href="{{ url_for('download_single', category=category, size='source', filename=file.filename) }}" class="btn btn-primary btn-sm" download title="Source (L)">L</a>
                         <a href="{{ url_for('download_single', category=category, size='largest', filename=file.filename) }}" class="btn btn-info btn-sm" download title="Largest (M)">M</a>

@@ -123,7 +123,9 @@ video.card-img-top {
 }
 
 #category-tree .jstree-anchor .jstree-icon {
-    display: none;
+    width: 24px; /* Increased icon size */
+    height: 24px;
+    margin-right: 10px; /* Space between icon and text */
 }
 
 /* Style the dialog */
