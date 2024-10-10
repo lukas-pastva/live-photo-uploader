@@ -194,11 +194,11 @@ dialog::backdrop {
 }
 
 .treeview span.icon {
-    margin-right: 10px;
+    margin-right: 10px !important;
 }
 
 .list-group {
-    border-color: #cacaca;
-    border-width: 1px;
-    border-style: solid;
+    border-color: #cacaca !important;
+    border-width: 1px !important;
+    border-style: solid !important;
 }
