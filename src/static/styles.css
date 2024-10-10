@@ -115,10 +115,11 @@ video.card-img-top {
 
 /* Additional Styling */
 
-/* Hide the default jsTree icons */
+/* Increase jsTree text size and adjust tree structure */
 #category-tree .jstree-anchor {
     display: flex;
     align-items: center;
+    font-size: 1.5rem; /* Increased text size */
 }
 
 #category-tree .jstree-anchor .jstree-icon {
